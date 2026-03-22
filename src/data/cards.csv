@@ -1,0 +1,127 @@
+ID,Nombre,CardType,Rareza,Coste,Vida,Ataque,Velocidad,Rango_ataque,Grupos,Arquetipo,Descripción habilidad especial,SpecialAbility,Temática,Notas de Ilustración,,Notas de Balance
+1,Jose,unit,Común,2,9,6,2,1,"Los Cabeza de Tet, Futbolero",,,,,,,
+2,Chino,unit,Común,4,18,14,2,1,"Los Cabeza de Tet, Futbolero",,,,,,,
+3,Kapsi,unit,Común,3,14,9,1,1,"Los Cabeza de Tet, Futbolero",,Mover 1 casilla extra después de atacar,,,,,
+4,Stefano,unit,Común,3,15,8,1,,"Fuerzas Especiales Osses, Los Cabeza de Tet, Ex-estudiante",,puede aumentar daño 1 perdiendo 1 vida,,,,,
+5,Melzisis,Unit,Común,1,8,4,1,1,"Fuerzas Especiales Osses
+Deportista",,,,,,,
+6,Joel,unit,Común,4,20,12,2,1,"Fuerzas Especiales Osses, Deportista, Futbolista",,,,,,,
+7,Vicente,unit,Común,6,38,11,1,2,"Fuerzas Especiales Osses, Deportista",,,,,,,
+8,Dante,unit,Común,2,8,7,2,1,"Fuerzas Especiales Osses, Artista, Músico, Matemático",,,,,,,
+9,Sabch,Unit,Especial,6,30,12,1,1,"Fuerzas Especiales Osses, Músico",,"Al inicio de tu turno, elige entre: Solo de Guitarra: Todos los aliados adyacentes ganan +1 de daño este turno; Alto Calibre: Sabch puede atacar a un enemigo a distancia (rango 3).",,,,,
+10,Tomas,Unit,Especial,4,20,12,1,1,"Los Cabeza de Tet, Futbolero",,"Puedes intercambiar 1 de energía para curar 4 de vida a una unidad,",,,,,
+11,Rafael,unit,Especial,2,6,8,1,3,"Fuerzas Especiales Osses, Artista, Músico, Matemático",,,,,,,
+12,Jose (Oso),unit,Épica,5,22,16,2,1,,,Puede +4 daño perdiendo 4 vida (Una vez por turno),,,,,
+13,Stefano (Viejo),unit,Épica,7,40,15,1,1,"Fuerzas Especiales Osses, Los Cabeza de Tet, Ex-estudiante",Defensa / Soporte,Todos Los Cabeza de Tet adquieren +1 de velocidad,,,,,
+14,Dante (Economista),unit,Épica,3,13,9,1,1,"Fuerzas Especiales Osses, Artista, Músico, Matemático",,El primer hechizo que juegues cada turno cuesta 1 menos (mínimo 1).,,,,,
+15,Melsizis (DT),unit,Épica,5,24,14,1,1,"Fuerzas Especiales Osses
+Deportista",,,,,,,
+16,Pan con Mayo,spell,Común,2,N/A,N/A,N/A,N/A,-,,"Cura 10
+Cura 12 si es FEO o CT",,,,,
+17,Globo de eventos,spell,Común,3,N/A,N/A,N/A,N/A,-,,Más 3 daño por 2 turnos,,,,,
+18,Operación de Olimpiadas,spell,Especial,3,N/A,N/A,N/A,N/A,-,,"Enemigo matemático pierde 4 daño este turno
+Si no es matemático, pierde 2 daño",,,,,
+19,Pelota de Futbol,spell,Especial,2,N/A,N/A,N/A,N/A,-,,"Más 3 daño por 1 turno
+Si elimina una unidad, roba 1 carta.",,,,,
+20,Agarre sospechoso,spell,Especial,4,N/A,N/A,N/A,N/A,-,,Reduce la velocidad de una unidad enemiga a 0 por un turno.,,,El Jose agarrandose al Chino o viceversa,,
+21,Cancha de Futbol,building,Especial,4,N/A,N/A,N/A,N/A,-,,Futbolero adquieren +1 velocidad si no han atacado,,,,,
+22,Zona de Juegos,building,Común,4,N/A,N/A,N/A,N/A,-,,Fuerzas Especiales Osses adquieren +2 de vida al invocarse.,,,,,
+23,Dario,unit,Común,1,5,3,2,1,"Artista
+Literatura
+Músico",,,,,,,
+24,Margaret,unit,Especial,4,26,10,1,1,"Artista
+Literatura",,Solo puede moverse en turnos pares.,,,,,
+25,Rafael (Bonnie),unit,Épica,6,28,15,1,4,"Fuerzas Especiales Osses, Artista, Músico, Matemático",,Luego de atacar tiene que recargar un turno,,,,,
+26,Ensayo PAES,spell,Épica,4,N/A,N/A,N/A,N/A,-,,Cura 6 y +3 daño turno,,,,,
+27,Lienzo de Arte,spell,Épica,3,N/A,N/A,N/A,N/A,-,,Más 1 rango y +2 daño este turno,,,,,
+28,Sala de Física,building,Especial,4,N/A,N/A,N/A,N/A,-,,Matemáticos +1 daño,,,,,
+29,Naty,unit,Común,1,3,3,2,1,"3_NAI
+Danza",,,,,,,
+30,Ami,unit,Común,3,13,11,2,1,"3_NAI
+Danza",,,,,,,
+31,Isacovic,unit,Común,3,14,9,1,2,"3_NAI
+Danza",,,,,,,
+32,Ale,unit,Común,3,16,9,1,1,"3_NAI
+Danza",,,,,,,
+33,Bichots,unit,Especial,5,26,15,2,1,"3_NAI
+Los Cabeza de Tet
+Futbolero",,,,,,,
+34,Isacovic (Baterista),unit,Especial,4,21,9,1,1,"3_NAI
+Danza
+Musico",," Si tiene adyacente un enemigo, lo inmoviliza por un turno. Esta habilidad no se puede activar si esta unidad ha sido movida este turno",,,,,
+35,Naty & Ami (Duales),unit,Epica,5,24,8,1,1,"3_NAI
+Danza",,"Puede atacar 2 veces por turno
+
+Es requerido para invocar esta carta que en el tablero haya una Naty y una Ami activos para invocar, pudiendo colocarlo en cualquier de las ubicaciones que se encuentran.",,,,,
+36,Tik-Toks,spell,Especial,5,N/A,N/A,N/A,N/A,-,,Cura 1 por cada 3_NAI o Dermapatch.,,,,,
+37,Invitación de Juego,spell,Especial,4,N/A,N/A,N/A,N/A,-,,"Mira las 3 primeras cartas del mazo.
+Puedes poner una unidad de coste 3 o menos en tu mano.",,,,,
+38,Escenario de Baile,building,Épica,5,N/A,N/A,N/A,N/A,-,,3_NAI / Músico / Danza reciben 1 menos daño,,,,,
+39,Nico,unit,Común,7,34,14,1,1,Deportista,,Gana 4 de daño a cambio de no poder moverse 2 turnos (Se efectua antes del movimiento),,,,,
+40,Freddy,unit,Común,2,10,6,1,1,"Mish
+Futbolista",,,,,,,
+41,Cutiño,unit,Especial,4,19,9,1,1,"Mish
+Artista",,Invoca Mini-Mecha pagando 3 de energia,,,,,
+42,Javi B,unit,Especial,3,13,9,1,1,"Mish
+Artista",,Puede mover aliado 1 casilla una vez por turno,,,,,
+43,Helen,unit,Común,5,28,12,1,1,"Tralalero tralala
+Mish
+Artista
+Literatura",,,,,,,
+44,Mini-Mecha,unit,Especial,Invocación Especial,10,6,0,2,Mish,,"Al morir, hace 3 de daño en area",,,,Imaginen que es un Strike Freedom Gundam,
+45,Zona Mish,building,Especial,4,N/A,N/A,N/A,N/A,-,,"Mish +1 daño
+Nico y Dante también son considerados Mish",,,,,
+46,Isa,unit,Especial,1,4,3,3,1,"Fuerzas Especiales Osses
+Niños
+Artista
+Danza",,,,,,,
+47,Dante (Yukata),unit,Especial,4,17,10,1,1,"Fuerzas Especiales Osses, Artista, Músico, Matemático",,Puede utilizar su Miku Peluche como un segundo ataque que hace 6 de daño y tiene 1 de rango extra.,,,,,
+48,Emi,unit,Común,4,21,10,1,1,"Derma-patch
+Danza
+Musica",,"Al inicio de tu turno, cura 1 de vida a un aliado adyacente",,,,,
+49,Sofi,unit,Común,3,15,7,1,1,"Derma-patch
+Musica",,Reduce el daño recibido de un aliado en 4 este turno,,,,,
+50,Daniela,unit,Común,3,15,8,,,Derma-patch,,Gana + 3 daño si rival tiene más vida,,,,,
+51,Martina,unit,Común,2,9,8,1,1,"Derma-patch
+Los Cabeza de Tet",,,,,,,
+52,Richi,unit,Común,5,26,13,1,1,Derma-patch,,Mitad daño primer golpe,,,,,
+53,Dragon Menor de Alianzas,unit,Épica,8,45,20,0,1,Derma-patch,,"Al inicio del tercer turno tras su invocación, se mueve a la casilla opuesta de su fila. Mueve cualquier carta que este la casilla que ocupara hacia adelante. Esta carta no puede ser afectada por bonificaciones de velocidad",,,,,
+54,Derma-patch,spell,Especial,3,N/A,N/A,N/A,N/A,-,,"Cura 12
+Si objetivo es Dermapatch, gana +2 ataque este turno",,,,,
+55,Reacción Explosiva,spell,Común,4,N/A,N/A,N/A,N/A,-,,"Todos enemigos pierden 2 PV
+Si son 3 o más enemigos, pierden 3",,,,,
+56,*Este espacio esta vacio*,,,,,,,,-,,,,,,,
+57,Brainer,spell,Especial,3,N/A,N/A,N/A,N/A,-,,Más 1 velocidad y +2 daño este turno,,,,,
+58,Sala STEAM,building,Especial,4,N/A,N/A,N/A,N/A,-,,Un Dermapatch cura 2 al inicio del turno,,,,,
+59,Axel,unit,Especial,4,19,11,2,1,Mish,,,,,,,
+60,Joel (Billarista),unit,Especial,6,30,14,1,1,"Fuerzas Especiales Osses, Deportista, Futbolista",,"Si eliminas una unidad con esta tropa, puede mover y atacar denuevo este turno. (Solo una vez por turno)",,,,,
+61,Chapuline,spell,Especial,1,N/A,N/A,N/A,N/A,-,,"Cura 4
+Pierde 3 daño por un turno",,,,,
+62,Robo Disimulado,spell,Común,4,N/A,N/A,N/A,N/A,-,,"Roba 2 cartas
+Si tienes 7 o más en mano, roba 1",,,,,
+63,Benja,unit,Especial,3,15,10,1,1,"Fuerzas Especiales Osses, Ex-Estudiante",,,,,,,
+64,Dante & Isa (Duales),unit,Epica,4,18,9,2,1,"Fuerzas Especiales Osses, Artista, Músico, Matemático, Niños, Danza",,"Puede cambiar entre 2 modalidades una vez por turno.
+Modo Ataque: Adquiere +5 de daño a cambio de -1 de velocidad
+Modo Velocidad Adquiere +1 de velocidad a cambio de -4 de daño.
+
+Es requerido para invocar esta carta que en el tablero haya un Dante y una Isa activos para invocar, pudiendo colocarlo en cualquier de las ubicaciones que se encuentran.",,,,,
+65,Margarita,unit,Común,3,15,9,1,1,"Tralalero tralala
+Artista",,,,,,,
+66,Camila,unit,Común,2,10,7,1,1,"Tralalero tralala
+Literatura
+Artista",,,,,,,
+67,Ariana,unit,Común,3,15,9,2,1,"Tralalero tralala
+Músico
+Artista",,,,,,,
+68,Iara,unit,Común,4,18,8,1,1,Tralalero tralala,,Reduce el daño recibido en 2 si hay 2 o más Tralalero en el tablero.,,,,,
+69,Margarita (Classic),unit,Especial,5,20,6,1,1,"Tralalero tralala
+Artista",Soporte,Todos los aliados ganan +1 de daño mientras ella este viva.,,,,,
+70,Combo de cartas,spell,Especial,3,N/A,N/A,N/A,N/A,,,"Roba 2 cartas.
+Si controlas 2 o más Futboleros, roba 1 carta adicional.",,,Basar en cuando jugamos Uno los Cabeza de Tet y FEO,,
+71,Expulsión de clase,spell,Especial,4,N/A,N/A,N/A,N/A,,,Destruye una unidad con 15 o menos de ataque.,,,,,
+72,Charla Vocacional,spell,Especial,2,N/A,N/A,N/A,N/A,,,"Todos los aliados ganan +2 daño este turno.
+Si controlas un Músico, también ganan +1 velocidad.",,,Profesor Marcelo como estrella,,
+73,La Fundación,building,Epica,4,N/A,N/A,N/A,N/A,,,Los enemigos no pueden recibir buffs de ataque.,,,,,
+74,Lobo / Gaspar,unit,Especial,7,30,18,2,1,"Los Cabeza de Tet, Futbolero, Ex-Estudiante",,"Cuando entra, todos los aliados ganan +3 daño este turno.",,,,,
+75,Amira (Presidenta),unit,Epica,6,26,14,2,2,"3_NAI
+Danza",,"Después de atacar, todos los aliados ganan +1 daño este turno.",,,,,
