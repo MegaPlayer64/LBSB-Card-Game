@@ -42,5 +42,27 @@ def start_game():
     print("\nIniciando Motor de Juego LBSB...")
     engine.run()
 
+# main.py
+
+def main():
+    while True: # <--- El bucle que mantiene viva la terminal
+        # 1. Ejecutamos el juego
+        start_game()
+        
+        # 2. Cuando el juego termina (porque se cerró el loop del engine)
+        print("\n" + "="*30)
+        print("   ¿PARTIDA TERMINADA?")
+        print("="*30)
+        
+        opcion = input("Presiona 'r' para REINICIAR o cualquier otra tecla para SALIR: ").lower()
+        
+        if opcion != 'r':
+            print("Cerrando el motor LBSB... ¡Nos vemos!")
+            break 
+        
+        # Si eligió 'r', el bucle vuelve a empezar y llama a start_game()
+        # Lo que limpia el tablero y recarga el CSV automáticamente.
+        print("\n Reiniciando sistema...\n")
+
 if __name__ == "__main__":
-    start_game()
+    main()

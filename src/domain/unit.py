@@ -23,6 +23,13 @@ class Unit(Card):
         self.pos_x = -1
         self.pos_y = -1
 
-    def take_damage(self, amount: int):
-        self.current_health -= amount
-        return self.current_health <= 0
+    def take_damage(self, amount: int) -> bool:
+        """Resta vida y devuelve True si la unidad murió."""
+        self.health -= amount
+        print(f">> {self.name} recibió {amount} de daño! (Vida restante: {self.health})")
+        return self.health <= 0
+
+    def reset_turn(self):
+        """Limpia las banderas al final del turno."""
+        self.has_moved = False
+        self.has_attacked = False
