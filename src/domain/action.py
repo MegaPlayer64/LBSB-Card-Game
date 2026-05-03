@@ -27,7 +27,8 @@ class Action:
 
         if self.type == ActionType.ATTACK:
             self.payload['from'] = (self.payload['from'][0], self.payload['from'][1])
-            self.payload['target'] = (self.payload['target'][0], self.payload['target'][1])
+            if self.payload['target'] != 'B':
+                self.payload['target'] = (self.payload['target'][0], self.payload['target'][1])
 
     #Play_unit
     #play_trick

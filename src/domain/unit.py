@@ -12,24 +12,45 @@ class Unit(Card):
             rarity=rarity, 
             description=description
         )
-        # Atributos específicos de la unidad en el tablero 5x5
+        # Atributos específicos de la unidad en el tablero 5x6
         self.max_health = health
-        self.current_health = health
+        self.health = health
         self.attack = attack
         self.speed = speed
         self.range_atk = range_atk
+        
+        # Habilidades estáticas
+        self.static_abilities = []
+        if str(self.id) == "56" or self.name == 'Margarita (Vintage)':
+            self.static_abilities.append({"type": "buff_all_attack", "amount": 1})
+        elif str(self.id) == "59" or self.name == 'Melsizis (DT)':
+            self.static_abilities.append({"type": "buff_tag_attack", "tag": "fuerzas especiales valenzuela", "amount": 1})
+            self.static_abilities.append({"type": "buff_tag_speed_if_tag_present", "target_tag": "fuerzas especiales valenzuela", "condition_tag": "cabezal de tren", "amount": 1})
         
         # Posición inicial (fuera del tablero)
         self.pos_x = -1
         self.pos_y = -1
 
-    def take_damage(self, amount: int) -> bool:
+    def take_damage(self, amount: int, game_state) -> bool:
         """Resta vida y devuelve True si la unidad murió."""
-        self.health -= amount
-        print(f">> {self.name} recibió {amount} de daño! (Vida restante: {self.health})")
+        from domain.ability_manager import AbilityManager
+        AbilityManager.trigger_on_damage_received(self, amount, game_state)
+        if self.has_shield:
+            damage_taken = amount // 2
+            self.health -= damage_taken
+            print(f">> {self.name} recibió {amount} de daño, pero su escudo lo redujo a {damage_taken}! (Vida restante: {self.health})")
+            self.has_shield = False
+        else:
+            self.health -= amount
+            print(f">> {self.name} recibió {amount} de daño! (Vida restante: {self.health})")
         return self.health <= 0
 
-    def reset_turn(self):
-        """Limpia las banderas al final del turno."""
+    def reset_turn_state(self):
+        """Limpia las banderas al inicio/fin del turno."""
         self.has_moved = False
         self.has_attacked = False
+
+    def on_enter(self, game_state):
+        from domain.ability_manager import AbilityManager
+        AbilityManager.trigger_on_enter(self, game_state)
+

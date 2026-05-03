@@ -5,6 +5,7 @@ class ActionType(Enum):
     PLAY_UNIT = auto()
     PLAY_TRICK = auto()
     PLAY_ENVIRONMENT = auto()
+    PLAY_CARD = auto()
 
     MOVE = auto()
     ATTACK = auto()

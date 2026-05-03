@@ -1,7 +1,7 @@
 # src/domain/models/board.py
 
 class Board:
-    def __init__(self, width=5, height=5):
+    def __init__(self, width=6, height=5):
         self.width = width
         self.height = height
         # Diccionario para acceso rápido: (x, y) -> Unit

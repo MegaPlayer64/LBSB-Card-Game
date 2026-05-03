@@ -2,67 +2,82 @@
 import os
 import sys
 
-import src.domain.game_state as gs
-print(f"DEBUG: Cargando GameState desde: {gs.__file__}")
-
 # Agregamos la carpeta 'src' al path para que Python encuentre tus módulos
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 
-from src.infrastructure.loaders.card_loader import CardLoader
-from src.domain.player import Player
-from src.domain.game_state import GameState
-from src.application.game_engine import GameEngine
-from src.interfaces.controllers.human_controller import HumanController
+try:
+    from src.infrastructure.loaders.card_loader import CardLoader
+    from src.domain.player import Player
+    from src.domain.game_state import GameState
+    from src.application.game_engine import GameEngine
+    from src.interfaces.controllers.human_controller import HumanController
+    from src.interfaces.controllers.ai_controller import AIController
+    from src.interfaces.view import ConsoleView
+except ImportError as e:
+    print(f"\n[ERROR CRITICO] Fallo de importación, posible dependencia circular: {e}\n")
+    sys.exit(1)
 
 
-def start_game():
-    # 1. Preparar Datos
+def start_integration_test():
+    print("\n" + "="*40)
+    print("   INICIANDO TEST DE INTEGRACIÓN LBSB   ")
+    print("="*40)
+
+    # 1. Inicializar CardLoader
+    print("\n[1] Cargando Base de Datos de Cartas...")
     csv_path = "src/data/cards.csv"
-    units_data = CardLoader.load_units(csv_path)
-    
-    # En main.py
-    p1 = Player(player_id=0, name="JoseIgnacio")
-    p2 = Player(player_id=1, name="Carlitos")
-    
-    state = GameState([p1, p2])
-    
-    jose = next((u for u in units_data if u.id == 1), None)
-    if jose:
-        jose.owner_id = 0  # <--- IMPORTANTE: Debe ser 0 para que el Profe lo mueva
-        jose.has_moved = False # Inicializamos por si acaso
-        state.board.set_unit_at(1, 1, jose)
-        print(f"--- ¡{jose.name} ha entrado al tablero en (1,1)! ---")
+    all_cards = CardLoader.load_units(csv_path)
+    print(f" -> Cartas cargadas exitosamente: {len(all_cards)} (Incluye Unidades, Spells y Buildings)")
 
-    # 5. Configurar Controladores
-    # El Jugador 1 es Humano, el Jugador 2 podría ser IA (o también humano por ahora)
-    controllers = [HumanController(), HumanController()]
+    # 2. Configurar Jugadores
+    print("\n[2] Configurando Jugadores...")
+    p1 = Player(player_id=0, name="Jugador 1")
+    p2 = Player(player_id=1, name="Jugador 2")
     
-    # 6. Ejecutar Motor
+    # 3. Instanciar Motor y Estado
+    print("\n[3] Instanciando GameState y Tablero 6x5...")
+    # NOTA: Al instanciar GameState, internamente se cargan los mazos, se barajan y se roban 5 cartas a cada Jugador.
+    state = GameState([p1, p2])
+    controllers = [HumanController(), AIController(player_id=1)]
     engine = GameEngine(state, controllers)
-    print("\nIniciando Motor de Juego LBSB...")
+    view = ConsoleView()
+
+    # 4. Imprimir Estado Actual Post-Robo Inicial
+    print("\n[4] Verificando Estado Inicial...")
+    print(f" -> {p1.name} | Vida: {p1.health} HP | Cartas en mano: {len(p1.hand)} | Mazo restante: {len(p1.deck)}")
+    print(f" -> {p2.name} | Vida: {p2.health} HP | Cartas en mano: {len(p2.hand)} | Mazo restante: {len(p2.deck)}")
+
+    print("\n[5] Dibujando Tablero Inicial Limpio:")
+    view.draw_board(state)
+
+    print("\n[6] Iniciando Loop de Juego.")
+    print(" -> INSTRUCCIÓN PARA TEST: Selecciona la acción [4] Jugar Carta.")
+    print(" -> Prueba invocar una unidad para el J1 en X >= 2 (Debería fallar por restricción de zona).")
+    print(" -> Prueba invocar una unidad para el J1 en X < 2  (Debería ser exitoso).")
+    print("-" * 40 + "\n")
+
+    # Arrancamos el motor
     engine.run()
 
-# main.py
 
 def main():
-    while True: # <--- El bucle que mantiene viva la terminal
-        # 1. Ejecutamos el juego
-        start_game()
-        
-        # 2. Cuando el juego termina (porque se cerró el loop del engine)
+    while True:
+        try:
+            start_integration_test()
+        except Exception as e:
+            print(f"\n[!] Error Inesperado durante la partida: {e}")
+            
         print("\n" + "="*30)
-        print("   ¿PARTIDA TERMINADA?")
+        print("   ¿TEST FINALIZADO?")
         print("="*30)
-        
-        opcion = input("Presiona 'r' para REINICIAR o cualquier otra tecla para SALIR: ").lower()
+        opcion = input("Presiona 'r' para REINICIAR el Test o cualquier otra tecla para SALIR: ").lower()
         
         if opcion != 'r':
-            print("Cerrando el motor LBSB... ¡Nos vemos!")
+            print("Cerrando el entorno de test... ¡Nos vemos!")
             break 
-        
-        # Si eligió 'r', el bucle vuelve a empezar y llama a start_game()
-        # Lo que limpia el tablero y recarga el CSV automáticamente.
-        print("\n Reiniciando sistema...\n")
+            
+        print("\nReiniciando sistema...\n")
+
 
 if __name__ == "__main__":
     main()

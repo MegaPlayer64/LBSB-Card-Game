@@ -1,2 +1,3 @@
 # LBSB-Card-Game
-Yeah this is good
+
+¿Qué pongo? Si hare un PROJECT_CONCEPTS.md 
