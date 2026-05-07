@@ -38,7 +38,14 @@ def start_integration_test():
     print("\n[3] Instanciando GameState y Tablero 6x5...")
     # NOTA: Al instanciar GameState, internamente se cargan los mazos, se barajan y se roban 5 cartas a cada Jugador.
     state = GameState([p1, p2])
-    controllers = [HumanController(), AIController(player_id=1)]
+    # controllers = [HumanController(), AIController(player_id=1)]
+    opcion = input("¿Quieres jugar tu contra la IA, contra otro jugador o simular un combate en tre IA? (1 para IA, 2 para otro jugador, 3 para IA vs IA): ")
+    if opcion == "1":
+        controllers = [HumanController(), AIController(player_id=1)]
+    elif opcion == "2":
+        controllers = [HumanController(), HumanController(player_id=1)]
+    else:
+        controllers = [AIController(player_id=0), AIController(player_id=1)]
     engine = GameEngine(state, controllers)
     view = ConsoleView()
 
