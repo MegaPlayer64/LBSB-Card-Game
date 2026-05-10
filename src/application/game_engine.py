@@ -32,6 +32,10 @@ class GameEngine:
                     
         # 3. Feedback en Consola
         self.view.show_message(f">> [Sistema] Las unidades de {player.name} están listas para la acción.")
+        
+        # 4. Efectos de Entorno al inicio del turno
+        if getattr(self.game_state, 'active_environment', None):
+            self.game_state.active_environment.on_turn_start(self.game_state, player.id)
 
     def run(self):
         self.view.show_message("¡El motor ha arrancado!")
@@ -63,21 +67,36 @@ class GameEngine:
                     self.view.show_message(f"[!] Error: {e}")
 
             unit_played = None
+            spell_played = None
+            spell_target = None
+            
             if action.type.name == "PLAY_CARD":
                 card_index = action.payload.get('card_index')
                 if 0 <= card_index < len(player.hand):
                     card = player.hand[card_index]
-                    if card.card_type.lower() in ('environment', 'building'):
-                        from domain.environment import Environment
-                        self.game_state.active_environment = Environment(card, player.id)
-                        self.view.show_message(f"¡El entorno ha cambiado a {card.name}!")
-                    elif card.card_type.lower() == 'unit':
+                    if card.card_type.lower() == 'unit':
                         unit_played = card
+            
+            elif action.type.name == "PLAY_SPELL":
+                card_index = action.payload.get('card_index')
+                if 0 <= card_index < len(player.hand):
+                    spell_played = player.hand[card_index]
+                    spell_target = action.payload.get('target')
 
             self.game_state.apply_action(action)
             
             if unit_played and hasattr(unit_played, 'on_enter'):
                 unit_played.on_enter(self.game_state)
+                
+            if spell_played:
+                from domain.ability_manager import AbilityManager
+                # Ejecutar el efecto del hechizo
+                AbilityManager.execute_spell(spell_played, spell_target, self.game_state)
+                # Mover al cementerio
+                if not hasattr(player, 'graveyard'):
+                    player.graveyard = []
+                player.graveyard.append(spell_played)
+                self.view.show_message(f">> El hechizo {spell_played.name} fue enviado al cementerio.")
             
             if action.type.name == "END_TURN":
                 self.view.show_message(f"Fin del turno de {player.name}")

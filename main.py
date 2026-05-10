@@ -42,10 +42,13 @@ def start_integration_test():
     opcion = input("¿Quieres jugar tu contra la IA, contra otro jugador o simular un combate en tre IA? (1 para IA, 2 para otro jugador, 3 para IA vs IA): ")
     if opcion == "1":
         controllers = [HumanController(), AIController(player_id=1)]
+        p2.is_ai = True
     elif opcion == "2":
         controllers = [HumanController(), HumanController(player_id=1)]
     else:
         controllers = [AIController(player_id=0), AIController(player_id=1)]
+        p1.is_ai = True
+        p2.is_ai = True
     engine = GameEngine(state, controllers)
     view = ConsoleView()
 

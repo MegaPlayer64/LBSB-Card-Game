@@ -77,6 +77,40 @@ class GameState:
                             if ability['target_tag'] in unit_tags and ability['condition_tag'] in board_ally_tags:
                                 effective_speed += ability['amount']
 
+        # Procesar buffs temporales (Hechizos)
+        if hasattr(unit, 'temporary_buffs'):
+            for buff in unit.temporary_buffs:
+                if buff.get('delay', 0) > 0:
+                    continue
+                if buff['type'] == 'attack':
+                    effective_attack += buff['amount']
+                elif buff['type'] == 'speed':
+                    effective_speed += buff['amount']
+                elif buff['type'] == 'speed_set':
+                    effective_speed = buff['value']
+                elif buff['type'] == 'attack_set':
+                    effective_attack = buff['value']
+
+        # Efectos estáticos de Entorno Activo
+        if getattr(self, 'active_environment', None):
+            env_id = int(self.active_environment.card.id)
+            if env_id == 53: # Cancha de Futbol
+                if 'futbolero' in unit_tags and not getattr(unit, 'has_attacked', False):
+                    effective_speed += 1
+            elif env_id == 54: # La Fundación
+                if 'tralalero tralala' in unit_tags:
+                    effective_attack -= 1
+                
+                # Los enemigos no pueden recibir buffs de ataque
+                if getattr(unit, 'owner_id', None) is not None and unit.owner_id != self.active_environment.owner_id:
+                    # Limitar el ataque máximo a su ataque base si es mayor
+                    if effective_attack > unit.attack:
+                        effective_attack = unit.attack
+
+        # Evitar valores negativos
+        effective_attack = max(0, effective_attack)
+        effective_speed = max(0, effective_speed)
+
         return {"attack": effective_attack, "speed": effective_speed}
 
     def validate_summon(self, player_id, x, y):
@@ -116,6 +150,28 @@ class GameState:
                     return False
                 if not self.validate_summon(action.player_id, tx, ty):
                     print(f">> [!] Zona de invocación inválida para el jugador {action.player_id}.")
+                    return False
+            return True
+
+        if action.type.name == "PLAY_SPELL":
+            card_index = action.payload.get('card_index')
+            target = action.payload.get('target')
+            
+            player = self.get_current_player()
+            if not (0 <= card_index < len(player.hand)):
+                print(">> [!] Índice de carta inválido.")
+                return False
+                
+            card = player.hand[card_index]
+            
+            if player.current_energy < int(card.cost):
+                print(f">> [!] Energía insuficiente. Necesitas {card.cost}, tienes {player.current_energy}.")
+                return False
+            
+            if target != 'G' and isinstance(target, tuple):
+                tx, ty = target
+                if not self.board.is_within_bounds(tx, ty):
+                    print(">> [!] Objetivo fuera del tablero.")
                     return False
             return True
 
@@ -245,8 +301,29 @@ class GameState:
                 card.owner_id = int(player.id)
                 self.board.set_unit_at(tx, ty, card)
                 print(f">> ¡{player.name} invocó a {card.name} en ({tx}, {ty})!")
+                
+                # Efecto pasivo 52 (Zona de Juegos)
+                if getattr(self, 'active_environment', None) and int(self.active_environment.card.id) == 52:
+                    if 'fuerzas especiales valenzuela' in str(getattr(card, 'groups', '')).lower():
+                        card.max_health += 2
+                        card.health += 2
+                        print(f">> [Zona de Juegos] ¡{card.name} obtiene +2 de Vida Máxima al invocarse! (Vida actual: {card.health})")
+                        
+            elif card.card_type.lower() in ('environment', 'building'):
+                from domain.environment import Environment
+                self.active_environment = Environment(card, player.id)
+                print(f">> ¡El entorno ha cambiado a {card.name}!")
             else:
                 print(f">> ¡{player.name} jugó la carta {card.name}!")
+        
+        if action.type.name == "PLAY_SPELL":
+            # Eliminamos la carta de la mano y restamos la energía (El efecto se ejecuta en game_engine)
+            card_index = action.payload['card_index']
+            player = self.get_current_player()
+            card = player.hand.pop(card_index)
+            player.current_energy -= int(card.cost)
+            print(f">> ¡{player.name} lanzó el hechizo {card.name}!")
+
         if action.type.name == "MOVE":
             fx, fy = action.payload['from']
             tx, ty = action.payload['to']
@@ -281,11 +358,27 @@ class GameState:
                 target = self.board.get_unit_at(tx, ty)
                 # Aplicar daño
                 murió = target.take_damage(effective_attack, self)
-                attacker.on_attack(self)
                 if murió:
                     print(f">>> ¡{target.name} ha sido derrotado! <<<")
                     self.board.remove_unit(tx, ty)
-            
+                    
+                    # Chequeo de buff "draw_on_kill"
+                    if hasattr(attacker, 'temporary_buffs'):
+                        for buff in attacker.temporary_buffs:
+                            if buff.get('type') == 'draw_on_kill':
+                                player = self.players[attacker.owner_id]
+                                if player.deck and len(player.hand) < 10:
+                                    drawn_card = player.deck.pop(0)
+                                    player.hand.append(drawn_card)
+                                    print(f">>> ¡Habilidad activada! Robaste: {drawn_card.name}")
+                                break
+            attacker.on_attack(self)
+        
+        elif action.type.name == "ACTIVATE_ABILITY":
+            fx, fy = action.payload['from']
+            unit = self.board.get_unit_at(fx, fy)
+            unit.on_activate(self)
+
         elif action.type.name == "END_TURN":
             self._end_turn()
             
@@ -313,6 +406,24 @@ class GameState:
                     unit.has_moved = False
                     unit.has_attacked = False
                     unit.ability_used_this_turn = False
+                    
+                    # 1.5. Decrementar duración de buffs temporales si la unidad pertenece al jugador que termina su turno
+                    if unit.owner_id == self.current_player_id and hasattr(unit, 'temporary_buffs'):
+                        buffs_to_keep = []
+                        for buff in unit.temporary_buffs:
+                            if buff.get('delay', 0) > 0:
+                                buff['delay'] -= 1
+                                buffs_to_keep.append(buff)
+                            else:
+                                buff['duration'] -= 1
+                                if buff['duration'] > 0:
+                                    buffs_to_keep.append(buff)
+                        unit.temporary_buffs = buffs_to_keep
+
+        # Decrementar penalización de curación
+        current_p = self.get_current_player()
+        if hasattr(current_p, 'cant_heal_turns') and current_p.cant_heal_turns > 0:
+            current_p.cant_heal_turns -= 1
 
         # 2. Cambiar de jugador
         self.current_player_id = 1 - self.current_player_id

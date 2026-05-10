@@ -14,6 +14,7 @@ class Player:
 
         self.max_energy = 0
         self.current_energy = 0
+        self.cant_heal_turns = 0
 
     def shuffle_deck(self):
         random.shuffle(self.deck)

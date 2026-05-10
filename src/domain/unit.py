@@ -28,6 +28,9 @@ class Unit(Card):
             self.static_abilities.append({"type": "buff_tag_attack", "tag": "fuerzas especiales valenzuela", "amount": 1})
             self.static_abilities.append({"type": "buff_tag_speed_if_tag_present", "target_tag": "fuerzas especiales valenzuela", "condition_tag": "cabezal de tren", "amount": 1})
         
+        # Buffs temporales (Hechizos y estados por turnos)
+        self.temporary_buffs = []
+        
         # Posición inicial (fuera del tablero)
         self.pos_x = -1
         self.pos_y = -1
@@ -58,4 +61,8 @@ class Unit(Card):
     def on_attack(self, game_state):
         from domain.ability_manager import AbilityManager
         AbilityManager.trigger_on_attack(self, game_state)
+
+    def on_activate(self, game_state):
+        from domain.ability_manager import AbilityManager
+        AbilityManager.trigger_on_activate(self, game_state)
 

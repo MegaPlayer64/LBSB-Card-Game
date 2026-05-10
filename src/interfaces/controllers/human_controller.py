@@ -9,10 +9,15 @@ class HumanController(BaseController):
         
         while True:
             try:
-                print("Opciones: [1] Mover Unidad, [2] Atacar, [3] Terminar Turno, [4] Jugar Carta")
+                print("Opciones: [1] Mover Unidad, [2] Atacar, [3] Activar Habilidad, [4] Jugar Carta, [5] Terminar Turno.")
                 opcion = input("Selecciona una opción: ")
 
                 if opcion == "3":
+                    fx = int(input("Desde X: "))
+                    fy = int(input("Desde Y: "))
+                    return Action(ActionType.ACTIVATE_ABILITY, int(game_state.current_player_id), {'from': (fx, fy)})
+
+                if opcion == "5":
                     return Action(ActionType.END_TURN, int(game_state.current_player_id), {})
 
                 if opcion == "4":
@@ -31,19 +36,36 @@ class HumanController(BaseController):
                         continue
                         
                     card = player.hand[card_idx]
-                    tx, ty = -1, -1
                     if card.card_type.lower() == 'unit':
                         print(f">> Invocando unidad. Recuerda las zonas (Jugador 1: X<2, Jugador 2: X>3)")
                         tx = int(input("Hacia X (invocación): "))
                         ty = int(input("Hacia Y (invocación): "))
+                        return Action(
+                            type=ActionType.PLAY_CARD,
+                            player_id=int(game_state.current_player_id),
+                            payload={'card_index': card_idx, 'to': (tx, ty)}
+                        )
+                    elif card.card_type.lower() in ('spell', 'trick'):
+                        print(f">> Lanzando hechizo '{card.name}'. Costará {card.cost} de energía.")
+                        target_str = input("Objetivo X (o 'G' para Global): ").strip().upper()
+                        if target_str == 'G':
+                            target = 'G'
+                        else:
+                            tx = int(target_str)
+                            ty = int(input("Objetivo Y: "))
+                            target = (tx, ty)
+                        return Action(
+                            type=ActionType.PLAY_SPELL,
+                            player_id=int(game_state.current_player_id),
+                            payload={'card_index': card_idx, 'target': target}
+                        )
                     else:
                         print(f">> Jugando {card.card_type} '{card.name}'. Costará {card.cost} de energía.")
-                        
-                    return Action(
-                        type=ActionType.PLAY_CARD,
-                        player_id=int(game_state.current_player_id),
-                        payload={'card_index': card_idx, 'to': (tx, ty)}
-                    )
+                        return Action(
+                            type=ActionType.PLAY_CARD,
+                            player_id=int(game_state.current_player_id),
+                            payload={'card_index': card_idx, 'to': (-1, -1)}
+                        )
 
                 if opcion == "1":
                     # Pedimos coordenadas de origen y destino
