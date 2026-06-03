@@ -78,7 +78,7 @@ def start_integration_test():
         controllers = [HumanController(), AIController(player_id=1)]
         p2.is_ai = True
     elif opcion == "2":
-        controllers = [HumanController(), HumanController(player_id=1)]
+        controllers = [HumanController(), HumanController()]
     else:
         controllers = [AIController(player_id=0), AIController(player_id=1)]
         p1.is_ai = True

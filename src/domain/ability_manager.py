@@ -1,27 +1,43 @@
 from src.domain import unit
+from src.domain.game_state import GameState
+
 class AbilityManager:
+
+    env_id = GameState.active_environment
+
     @staticmethod
     def trigger_on_enter(unit, game_state):
         if int(unit.id) == 28:
             AbilityManager._cristobal_on_enter(unit, game_state)
+        elif int(unit.id) == 24:
+            AbilityManager._josefa_g_on_enter(unit, game_state)
         elif int(unit.id) == 29:
-            AbilityManager._najib_on_enter(unit, game_state)
-        elif int(unit.id) == 30:
             AbilityManager._crisby_on_enter(unit, game_state)
-        elif int(unit.id) == 31:
+        elif int(unit.id) == 30:
             AbilityManager._josefa_a_on_enter(unit, game_state)
         elif int(unit.id) == 17:
             AbilityManager._richi_on_enter(unit, game_state)
+        elif int(unit.id) == 58:
+            AbilityManager._dante_economista_main_ability(unit, game_state)
+        elif int(unit.id) == 31:
+            AbilityManager._isidora_on_enter(unit, game_state)
 
     @staticmethod
     def trigger_on_activate(unit, game_state):
         if int(unit.id) == 62:
             AbilityManager._stefano_on_activate(unit, game_state)
+        elif int(unit.id) == 25:
+            AbilityManager._nico_on_activate(unit, game_state)
+        elif int(unit.id) == 59:
+            AbilityManager._crisby_airsoft_on_activate(unit, game_state)
+        
 
     @staticmethod
     def trigger_on_attack(unit, game_state):
         if int(unit.id) == 3:
             AbilityManager._kapsi_on_attack(unit, game_state)
+        elif int(unit.id) == 15:
+            AbilityManager._daniela_on_attack(unit, game_state)
         elif int(unit.id) == 57:
             AbilityManager._amira_presidenta_on_attack(unit, game_state)
         elif int(unit.id) == 63:
@@ -31,6 +47,19 @@ class AbilityManager:
     def trigger_on_damage_received(unit, damage, game_state):
         if int(unit.id) == 61:
             AbilityManager._chino_quemadas_on_damage_received(unit, damage, game_state)
+        elif int(unit.id) == 21:
+            AbilityManager._iara_on_damage_received(unit, damage, game_state)
+
+    @staticmethod
+    def trigger_on_turn_start(unit, game_state):
+        if int(unit.id) == 25:
+            AbilityManager._nico_on_turn_start(unit, game_state)
+        elif int(unit.id) == 14:
+            AbilityManager._sofi_on_turn_start(unit, game_state)
+        elif int(AbilityManager.env_id) == 55:
+            AbilityManager._STEAM_on_turn_start(unit, game_state)
+        elif int(unit.id) == 58:
+            AbilityManager._dante_economista_main_ability(unit, game_state)
 
     @staticmethod
     def execute_spell(card, target, game_state):
@@ -669,3 +698,76 @@ class AbilityManager:
                 print(">> [!] Movimiento de evasión inválido. Chino recibió el impacto.")
         
         return damage
+    @staticmethod
+    def _STEAM_on_turn_start(unit, game_state):
+        for unit in game_state.board.get_player_units(unit.owner_id):
+            if "Derma-patch" in unit.groups and unit.health < unit.max_health: 
+                unit.health = min(unit.max_health, unit.health + 2)
+                print(f">> [Habilidad STEAM]: {unit.name} ha recibido 2 HP de curación.")
+    
+    @staticmethod
+    def _nico_on_turn_start(unit, game_state):
+        if getattr(unit, 'immobile_turns', 0) > 0:
+            unit.immobile_turns -= 1
+            print(f">> [Habilidad Nico]: {unit.name} tiene {unit.immobile_turns} turnos de parálisis restantes.")
+            if unit.immobile_turns == 0:
+                print(f">> [Habilidad Nico]: {unit.name} se ha recuperado de la parálisis.")
+    
+    @staticmethod
+    def _sofi_on_turn_start(unit, game_state):
+        for nx, ny in game_state.board.get_neighbors(unit.x, unit.y):
+            target = game_state.board.get_unit_at(nx, ny)
+            if target and target.owner_id == unit.owner_id and target.health < target.max_health:
+                target.health = min(target.max_health, target.health + 1)
+                print(f">> [Habilidad Sofi]: {target.name} ha recibido 1 HP de curación.")
+                break
+                
+    @staticmethod
+    def _iara_on_damage_received(unit, damage, game_state):
+        count = sum(1 for u in game_state.board.get_all_units() if "Tralaleros" in u.groups)
+        if count >= 2:
+            return max(0, damage - 2)
+        return damage
+    
+    @staticmethod
+    def _daniela_on_attack(unit, game_state):
+        target = game_state.board.get_unit_at(unit.target_x, unit.target_y)
+        if target and target.health > unit.health:
+            unit.attack += 2
+            print(f">> [Habilidad Daniela]: {unit.name} ha ganado 3 de daño.") 
+
+    @staticmethod
+    def _dante_economista_main_ability(unit, game_state):
+        game_state.get_player(unit.owner_id).cost_reduction_active = True
+    
+    @staticmethod
+    def _isidora_on_enter(unit, game_state):
+        # Da +3 de vida máxima a TODAS las unidades aliadas
+        for u in game_state.board.get_player_units(unit.owner_id):
+            if u.id != unit.id: # No modificarse a sí misma
+                u.max_health += 3
+                u.health = min(u.max_health, u.health + 3) # Si ya tenía vida, se la aumenta
+                print(f">> [Habilidad Isidora]: {u.name} ha ganado +3 de vida máxima.")
+    
+    @staticmethod
+    def _nico_on_activate(unit, game_state):
+        if unit.immobile_turns == 0:
+            unit.immobile_turns = 2
+            unit.attack += 3
+            print(f">> [Habilidad Nico]: {unit.name} no puede moverse por 2 turnos y ha ganado +3 de daño.")
+        else:
+            print(f">> [Habilidad Nico]: {unit.name} no puede moverse. Ya tiene {unit.immobile_turns} turnos inmovil restantes.")
+    
+    @staticmethod
+    def _crisby_airsoft_on_activate(unit, game_state):
+        if unit.has_moved:
+            print(f">> [Habilidad Crisby Airsoft]: No se puede activar debido a que ya se ha movido esta unidad.")
+            return
+        for nx, ny in game_state.board.get_neighbors(unit.x, unit.y):
+            target = game_state.board.get_unit_at(nx, ny)
+            if target and target.owner_id != unit.owner_id:
+                target.immobile_turns = 1 
+                print(f">> [Habilidad Crisby Airsoft]: {target.name} no puede moverse por 1 turno.")
+                break
+
+    # Porfa decime si te dignas a darte cuenta que esto se modifico Git
