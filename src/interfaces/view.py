@@ -4,7 +4,8 @@ import os
 class ConsoleView:
     @staticmethod
     def clear_screen():
-        os.system('cls' if os.name == 'nt' else 'clear')
+        pass
+        # os.system('cls' if os.name == 'nt' else 'clear')
 
     @staticmethod
     def draw_board(game_state):
@@ -33,10 +34,10 @@ class ConsoleView:
         print(f"\n{game_state.players[0].name} Base: {get_hp_bar(game_state.players[0].health)}")
         print(f"{game_state.players[1].name} Base: {get_hp_bar(game_state.players[1].health)}")
         
-        p1 = game_state.players[0]
-        print(f"\n--- Mano de {p1.name} ---")
-        if p1.hand:
-            for i, card in enumerate(p1.hand):
+        current_player = game_state.get_current_player()
+        print(f"\n--- Mano de {current_player.name} ---")
+        if current_player.hand:
+            for i, card in enumerate(current_player.hand):
                 print(f"[{i}] {card.name} (Coste: {card.cost})")
         else:
             print("(Mano vacía)")

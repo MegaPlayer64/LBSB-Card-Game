@@ -74,13 +74,17 @@ def start_integration_test():
     state = GameState([p1, p2], deck1, deck2)
     # controllers = [HumanController(), AIController(player_id=1)]
     opcion = input("¿Quieres jugar tu contra la IA, contra otro jugador o simular un combate en tre IA? (1 para IA, 2 para otro jugador, 3 para IA vs IA): ")
+
+ 
     if opcion == "1":
-        controllers = [HumanController(), AIController(player_id=1)]
+        dificulty = input("¿Quieres jugar contra una IA [EASY, MEDIUM, HARD]?: ").upper()
+        controllers = [HumanController(), AIController(player_id=1, difficulty=dificulty)]
         p2.is_ai = True
     elif opcion == "2":
         controllers = [HumanController(), HumanController()]
     else:
-        controllers = [AIController(player_id=0), AIController(player_id=1)]
+        dificulty = input("¿Quieres jugar contra una IA [EASY, MEDIUM, HARD]?: ").upper()
+        controllers = [AIController(player_id=0, difficulty=dificulty), AIController(player_id=1, difficulty=dificulty)]
         p1.is_ai = True
         p2.is_ai = True
     engine = GameEngine(state, controllers)

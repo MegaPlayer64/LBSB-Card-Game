@@ -239,10 +239,21 @@ class AIController:
         return score
 
     def _get_medium_action(self, game_state, legal_actions) -> Action:
-        # 1. Prioridad Absoluta: Ataque a Base
-        base_attacks = [a for a in legal_actions if a.type == ActionType.ATTACK and a.payload['target'] == 'B']
-        if base_attacks:
-            return base_attacks[0]
+
+        # 1. Fase de Invocación (Mayor Ataque)
+        summons = [a for a in legal_actions if a.type == ActionType.PLAY_CARD]
+        if summons:
+            player = game_state.players[self.player_id]
+            best_summon = None
+            max_atk = -1
+            for a in summons:
+                card = player.hand[a.payload['card_index']]
+                if card.card_type.lower() == 'unit' and card.attack > max_atk:
+                    max_atk = card.attack
+                    best_summon = a
+            if best_summon:
+                return best_summon
+
 
         # 2. Fase de Hechizo/Entorno
         spell_actions = [a for a in legal_actions if a.type == ActionType.PLAY_SPELL]
@@ -257,21 +268,8 @@ class AIController:
             if self._evaluate_environment_action(game_state, best_env) > 10:
                 return best_env
 
-        # 3. Fase de Invocación (Mayor Ataque)
-        summons = [a for a in legal_actions if a.type == ActionType.PLAY_CARD]
-        if summons:
-            player = game_state.players[self.player_id]
-            best_summon = None
-            max_atk = -1
-            for a in summons:
-                card = player.hand[a.payload['card_index']]
-                if card.card_type.lower() == 'unit' and card.attack > max_atk:
-                    max_atk = card.attack
-                    best_summon = a
-            if best_summon:
-                return best_summon
 
-        # 4. Fase de Movimiento (Hacia la Base Enemiga)
+        # 3. Fase de Movimiento (Hacia la Base Enemiga)
         moves = [a for a in legal_actions if a.type == ActionType.MOVE]
         if moves:
             best_move = None
@@ -305,15 +303,22 @@ class AIController:
                     best_attack = a
             if best_attack:
                 return best_attack
+        
+        # 5. Prioridad Absoluta: Ataque a Base
+        base_attacks = [a for a in legal_actions if a.type == ActionType.ATTACK and a.payload['target'] == 'B']
+        if base_attacks:
+            return base_attacks[0]
 
         return Action(ActionType.END_TURN, self.player_id, {})
 
-    def _get_groups_lower(self, entity):
-        groups = getattr(entity, 'groups', [])
+    def _get_groups_lower(self, card):
+        groups = getattr(card, 'groups', [])
+        if not groups:
+            return []
         if isinstance(groups, str):
-            return [g.strip().lower() for g in groups.split(',') if g and len(g.strip()) > 0]
+            return [g.strip().lower() for g in groups.replace('\n', ',').split(',')]
         elif isinstance(groups, list):
-            return [g.lower() for g in groups if g and len(g) > 0]
+            return [g.lower() for g in groups if g and len(str(g).strip()) > 0]
         return []
 
     def _calculate_synergy_score(self, card, game_state) -> int:
@@ -394,8 +399,9 @@ class AIController:
             elif action.type == ActionType.PLAY_CARD:
                 card = player.hand[action.payload['card_index']]
                 if card.card_type.lower() == 'unit':
+                    base_score = 20 + int(getattr(card, 'attack', 0)) * 3 + int(getattr(card, 'health', 0)) * 2
                     synergy = self._calculate_synergy_score(card, game_state)
-                    score += synergy
+                    score += base_score + synergy
                         
                     tx, ty = action.payload['to']
                     if 'excelencia' in self._get_groups_lower(card):

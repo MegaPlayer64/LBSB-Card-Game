@@ -3,8 +3,6 @@ from src.domain.game_state import GameState
 
 class AbilityManager:
 
-    env_id = GameState.active_environment
-
     @staticmethod
     def trigger_on_enter(unit, game_state):
         if int(unit.id) == 28:
@@ -52,11 +50,14 @@ class AbilityManager:
 
     @staticmethod
     def trigger_on_turn_start(unit, game_state):
+        active_env = getattr(game_state, 'active_environment', None)
+        env_id = int(active_env.card.id) if active_env else None
+
         if int(unit.id) == 25:
             AbilityManager._nico_on_turn_start(unit, game_state)
         elif int(unit.id) == 14:
             AbilityManager._sofi_on_turn_start(unit, game_state)
-        elif int(AbilityManager.env_id) == 55:
+        elif env_id == 55:
             AbilityManager._STEAM_on_turn_start(unit, game_state)
         elif int(unit.id) == 58:
             AbilityManager._dante_economista_main_ability(unit, game_state)
@@ -700,7 +701,7 @@ class AbilityManager:
         return damage
     @staticmethod
     def _STEAM_on_turn_start(unit, game_state):
-        for unit in game_state.board.get_player_units(unit.owner_id):
+        for unit in game_state.board.get_all_units(unit.owner_id):
             if "Derma-patch" in unit.groups and unit.health < unit.max_health: 
                 unit.health = min(unit.max_health, unit.health + 2)
                 print(f">> [Habilidad STEAM]: {unit.name} ha recibido 2 HP de curación.")
@@ -708,7 +709,6 @@ class AbilityManager:
     @staticmethod
     def _nico_on_turn_start(unit, game_state):
         if getattr(unit, 'immobile_turns', 0) > 0:
-            unit.immobile_turns -= 1
             print(f">> [Habilidad Nico]: {unit.name} tiene {unit.immobile_turns} turnos de parálisis restantes.")
             if unit.immobile_turns == 0:
                 print(f">> [Habilidad Nico]: {unit.name} se ha recuperado de la parálisis.")
@@ -743,7 +743,7 @@ class AbilityManager:
     @staticmethod
     def _isidora_on_enter(unit, game_state):
         # Da +3 de vida máxima a TODAS las unidades aliadas
-        for u in game_state.board.get_player_units(unit.owner_id):
+        for u in game_state.board.get_all_units():
             if u.id != unit.id: # No modificarse a sí misma
                 u.max_health += 3
                 u.health = min(u.max_health, u.health + 3) # Si ya tenía vida, se la aumenta

@@ -33,5 +33,6 @@ class Board:
             return True
         return False
 
-    def get_all_units(self):
-        return list(self.grid.values())
+    def get_all_units(self, player_id):
+        units = [unit for unit in self.grid.values() if unit.owner_id == player_id]
+        return units

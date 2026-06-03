@@ -141,8 +141,15 @@ class GameState:
                 return False
                 
             card = player.hand[card_index]
-            
-            final_cost = max(1, int(card.cost) - 1) if player.cost_reduction_active else int(card.cost)
+
+            # Forzamos que solo busque el descuento de Crisby si la tropa es 4 o menos, si no, deje la carta sin descuento
+            crisby_active = getattr(player, 'crisby_cost_reduction_active', False)
+
+            if crisby_active and card.cost <= 4:
+                final_cost = max(1, int(card.cost) - 1)
+            else:
+                final_cost = int(card.cost)
+
             if player.current_energy < final_cost:
                 print(f">> [!] Energía insuficiente. Necesitas {card.cost}, tienes {player.current_energy}.")
                 return False
@@ -154,6 +161,9 @@ class GameState:
                 if not self.validate_summon(action.player_id, tx, ty):
                     print(f">> [!] Zona de invocación inválida para el jugador {action.player_id}.")
                     return False
+            
+            if final_cost <= 4:
+                player.crisby_cost_reduction_active = False
             return True
 
         if action.type.name == "PLAY_SPELL":
@@ -166,8 +176,19 @@ class GameState:
                 return False
                 
             card = player.hand[card_index]
+            
+            # Busca primero los descuentos activos, posteriormente aplica el descuento de Crisby y luego el descuento de Dante Economista, aplicando la propiedad de coste 4 o menor de Crisby y solo para trucos de Dante Economista
+            crisby_active = getattr(player, 'crisby_cost_reduction_active', False)
+            d_economia_active = getattr(player, 'd_economia_cost_reduction_active', False)
+            
+            final_cost = int(card.cost)
 
-            final_cost = max(1, int(card.cost) - 1) if player.cost_reduction_active else int(card.cost)
+            if crisby_active and card.cost <= 4: 
+                final_cost = max(1, int(final_cost) - 1)
+
+            if d_economia_active:
+                final_cost = max(1, int(final_cost) - 1)
+                
             if player.current_energy < final_cost:
                 print(f">> [!] Energía insuficiente. Necesitas {card.cost}, tienes {player.current_energy}.")
                 return False
@@ -177,6 +198,11 @@ class GameState:
                 if not self.board.is_within_bounds(tx, ty):
                     print(">> [!] Objetivo fuera del tablero.")
                     return False
+
+            if final_cost <= 4:
+                player.crisby_cost_reduction_active = False
+            player.d_economia_cost_reduction_active = False
+
             return True
 
         if action.type.name == "MOVE":
@@ -416,7 +442,8 @@ class GameState:
     def _start_turn(self):
         # Llamar trigger_on_turn_start de AbilityManager
         from domain.ability_manager import AbilityManager
-        AbilityManager.trigger_on_turn_start(self)
+        for unit in self.board.get_all_units(self.current_player_id):
+            AbilityManager.trigger_on_turn_start(unit, self)
         
     def _end_turn(self):
         # 1. Resetear el estado de todas las unidades antes de cambiar de jugador
@@ -445,6 +472,10 @@ class GameState:
         current_p = self.get_current_player()
         if hasattr(current_p, 'cant_heal_turns') and current_p.cant_heal_turns > 0:
             current_p.cant_heal_turns -= 1
+
+        for unit in self.board.get_all_units(current_p.id):
+            if hasattr(unit, 'immobile_turns') and unit.immobile_turns > 0:
+                unit.immobile_turns -= 1
 
         # 2. Cambiar de jugador
         self.current_player_id = 1 - self.current_player_id
