@@ -15,6 +15,7 @@ class Player:
         self.max_energy = 0
         self.current_energy = 0
         self.cant_heal_turns = 0
+        self.failed_spells_this_turn = set()  # Índices de hechizos que han fallado este turno
 
     def shuffle_deck(self):
         random.shuffle(self.deck)

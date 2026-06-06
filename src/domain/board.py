@@ -33,6 +33,19 @@ class Board:
             return True
         return False
 
-    def get_all_units(self, player_id):
-        units = [unit for unit in self.grid.values() if unit.owner_id == player_id]
-        return units
+    def get_all_units(self, player_id=None):
+        if player_id is None:
+            return list(self.grid.values())
+        return [unit for unit in self.grid.values() if unit.owner_id == player_id]
+    
+    def get_neighbors(self, x, y):
+        """Retorna las coordenadas de las casillas adyacentes (hasta 8 vecinos)."""
+        neighbors = []
+        for dx in [-1, 0, 1]:
+            for dy in [-1, 0, 1]:
+                if dx == 0 and dy == 0:
+                    continue
+                nx, ny = x + dx, y + dy
+                if self.is_within_bounds(nx, ny):
+                    neighbors.append((nx, ny))
+        return neighbors

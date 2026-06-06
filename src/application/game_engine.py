@@ -91,12 +91,21 @@ class GameEngine:
             if spell_played:
                 from domain.ability_manager import AbilityManager
                 # Ejecutar el efecto del hechizo
-                AbilityManager.execute_spell(spell_played, spell_target, self.game_state)
-                # Mover al cementerio
-                if not hasattr(player, 'graveyard'):
-                    player.graveyard = []
-                player.graveyard.append(spell_played)
-                self.view.show_message(f">> El hechizo {spell_played.name} fue enviado al cementerio.")
+                spell_success = AbilityManager.execute_spell(spell_played, spell_target, self.game_state)
+                
+                if spell_success:
+                    # Mover al cementerio si tuvo éxito
+                    if not hasattr(player, 'graveyard'):
+                        player.graveyard = []
+                    player.graveyard.append(spell_played)
+                    self.view.show_message(f">> El hechizo {spell_played.name} fue enviado al cementerio.")
+                else:
+                    # El hechizo falló: devolver a mano, restaurar energía y registrar fallo
+                    card_index = action.payload['card_index']
+                    player.hand.append(spell_played)
+                    player.current_energy += int(spell_played.cost)
+                    player.failed_spells_this_turn.add(card_index)
+                    self.view.show_message(f">> El hechizo {spell_played.name} falló. Devuelto a la mano y energía restaurada.")
             
             if action.type.name == "END_TURN":
                 self.view.show_message(f"Fin del turno de {player.name}")

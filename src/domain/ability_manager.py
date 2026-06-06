@@ -67,6 +67,7 @@ class AbilityManager:
         print(f">> [Hechizo]: Ejecutando efecto de {card.name}")
         
         effect_methods = {
+            32: AbilityManager._spell_32_effect,
             33: AbilityManager._spell_33_effect,
             34: AbilityManager._spell_34_effect,
             35: AbilityManager._spell_35_effect,
@@ -96,10 +97,89 @@ class AbilityManager:
             return False
 
     @staticmethod
+    def _spell_32_effect(card, target, game_state):
+        # Llamado de otro punto: Atrae un enemigo hasta 2 casillas hacia el aliado más cercano
+        if not isinstance(target, tuple): 
+            return False
+            
+        tx, ty = target
+        target_unit = game_state.board.get_unit_at(tx, ty)
+        if not target_unit or target_unit.owner_id == game_state.current_player_id:
+            return False
+        
+        # 1. Buscar la unidad aliada más cercana
+        aliados = game_state.board.get_all_units(game_state.current_player_id)
+        if not aliados:
+            print(">> [Llamado de otro punto] No tienes unidades aliadas para atraer el objetivo.")
+            return False
+        
+        # Encontrar el aliado con la menor distancia de Manhattan
+        aliado_cercano = min(aliados, key=lambda u: abs(u.pos_x - target_unit.pos_x) + abs(u.pos_y - target_unit.pos_y))
+        
+        # 2. Calcular vector de dirección (eje principal)
+        dx = aliado_cercano.pos_x - target_unit.pos_x
+        dy = aliado_cercano.pos_y - target_unit.pos_y
+        
+        step_x = 1 if dx > 0 else (-1 if dx < 0 else 0)
+        step_y = 1 if dy > 0 else (-1 if dy < 0 else 0)
+        
+        # Si no están alineados perfectamente, priorizar el eje con mayor distancia
+        if step_x != 0 and step_y != 0:
+            if abs(dx) >= abs(dy):
+                step_y = 0
+            else:
+                step_x = 0
+        
+        # 3. Mover hasta 2 casillas en esa dirección mientras esté vacío
+        board = game_state.board
+        casillas_movidas = 0
+        current_x, current_y = target_unit.pos_x, target_unit.pos_y
+        
+        for _ in range(2):
+            next_x = current_x + step_x
+            next_y = current_y + step_y
+            
+            # Verificar límites y colisión
+            if board.is_within_bounds(next_x, next_y) and not board.is_occupied(next_x, next_y):
+                # No sobrepasar al aliado que lo atrae
+                if (step_x != 0 and next_x == aliado_cercano.pos_x) or (step_y != 0 and next_y == aliado_cercano.pos_y):
+                    break
+                current_x, current_y = next_x, next_y
+                casillas_movidas += 1
+            else:
+                break
+        
+        # 4. Actualizar posición del enemigo en el tablero
+        if casillas_movidas > 0:
+            board.remove_unit(target_unit.pos_x, target_unit.pos_y)
+            board.set_unit_at(current_x, current_y, target_unit)
+            print(f">> [Llamado de otro punto] ¡{target_unit.name} fue atraído a ({current_x}, {current_y})!")
+        else:
+            print(f">> [Llamado de otro punto] ¡{target_unit.name} está bloqueado y no puede ser atraído!")
+            return False
+        
+        # 5. Condición de robo: Si tiene la etiqueta "Nuevo"
+        if hasattr(target_unit, 'groups') and target_unit.groups:
+            groups_str = str(target_unit.groups).lower()
+            if 'nuevo' in groups_str:
+                player = game_state.get_current_player()
+                if len(player.hand) < 10 and player.deck:
+                    drawn_card = player.deck.pop(0)
+                    player.hand.append(drawn_card)
+                    print(f">> [Llamado de otro punto] ¡Objetivo con etiqueta 'Nuevo'! Robaste: {drawn_card.name}")
+        
+        return True
+
+    @staticmethod
     def _spell_33_effect(card, target, game_state):
-        if not isinstance(target, tuple): return False
-        target_unit = game_state.board.get_unit_at(*target)
-        if not target_unit: return False
+        if not isinstance(target, tuple): 
+            return False
+            
+        tx, ty = target
+        target_unit = game_state.board.get_unit_at(tx, ty)
+        player = game_state.players[target_unit.owner_id]
+        if not target_unit or target_unit.owner_id != player.id: return False
+        
         
         tags = str(getattr(target_unit, 'groups', '')).lower()
         heal_amount = 12 if 'fuerzas especiales valenzuela' in tags or 'cabezal de tren' in tags else 10
@@ -234,7 +314,7 @@ class AbilityManager:
                 
         if not valid_indices:
             print(">> No hay unidades de coste 3 o menos entre las opciones.")
-            return True # Efecto jugado pero sin éxito
+            return False # Efecto falló: no hay cartas válidas
             
         if getattr(player, 'is_ai', False):
             # AI logic: take the first valid one
@@ -243,13 +323,13 @@ class AbilityManager:
             try:
                 choice = input("Selecciona el índice de la unidad a robar (o presiona Enter para omitir): ")
                 if not choice.strip():
-                    return True
+                    return False # El jugador omitió el efecto
                 chosen = int(choice)
                 if chosen not in valid_indices:
                     print(">> Selección inválida. Omite el robo.")
-                    return True
+                    return False # Selección inválida
             except ValueError:
-                return True
+                return False
                 
         drawn_card = top_cards[chosen]
         player.deck.remove(drawn_card)
@@ -367,8 +447,9 @@ class AbilityManager:
         if not isinstance(target, tuple): return False
         tx, ty = target
         target_unit = game_state.board.get_unit_at(tx, ty)
-        if not target_unit: return False
-        
+        player = game_state.players[target_unit.owner_id]
+        if not target_unit or target_unit.owner_id == player.id: return False
+            
         effective_attack = game_state.get_effective_stats(target_unit)["attack"]
         
         if effective_attack <= 12:
@@ -513,7 +594,7 @@ class AbilityManager:
             print(">> [Habilidad Cristobal]: Mazo vacío, no se puede robar.")
 
     @staticmethod
-    def _najib_on_enter(unit, game_state):
+    def _josefa_g_on_enter(unit, game_state):
         # Mirar 3 cartas del mazo enemigo, poner 1 al fondo.
         enemy_id = 1 - unit.owner_id
         enemy = game_state.players[enemy_id]
@@ -523,18 +604,25 @@ class AbilityManager:
             for i, c in enumerate(top_cards):
                 print(f"[{i}] {c.name}")
             
-            try:
-                choice = int(input("Selecciona el índice de la carta a poner al fondo: "))
-                if 0 <= choice < len(top_cards):
-                    card_to_bottom = top_cards.pop(choice)
-                    enemy.deck.remove(card_to_bottom)
-                    enemy.deck.append(card_to_bottom)
-                    print(f">> {card_to_bottom.name} enviada al fondo del mazo enemigo.")
-                else:
-                    print(">> Selección inválida, se omite el efecto.")
-            except ValueError:
-                print(">> Entrada inválida, se omite el efecto.")
-    
+            player = game_state.players[unit.owner_id]
+            if getattr(player, 'is_ai', False):
+                card_to_bottom = top_cards.pop(0)
+                enemy.deck.remove(card_to_bottom)
+                enemy.deck.append(card_to_bottom)
+                print(f">> {card_to_bottom.name} enviada al fondo del mazo enemigo.")    
+            else:
+                try:
+                    choice = int(input("Selecciona el índice de la carta a poner al fondo: "))
+                    if 0 <= choice < len(top_cards):
+                        card_to_bottom = top_cards.pop(choice)
+                        enemy.deck.remove(card_to_bottom)
+                        enemy.deck.append(card_to_bottom)
+                        print(f">> {card_to_bottom.name} enviada al fondo del mazo enemigo.")
+                    else:
+                        print(">> Selección inválida, se omite el efecto.")
+                except ValueError:
+                    print(">> Entrada inválida, se omite el efecto.")
+        
     @staticmethod
     def _crisby_on_enter(unit, game_state):
         # Próxima carta coste 4 o menos cuesta 1 menos este turno
@@ -715,7 +803,7 @@ class AbilityManager:
     
     @staticmethod
     def _sofi_on_turn_start(unit, game_state):
-        for nx, ny in game_state.board.get_neighbors(unit.x, unit.y):
+        for nx, ny in game_state.board.get_neighbors(unit.pos_x, unit.pos_y):
             target = game_state.board.get_unit_at(nx, ny)
             if target and target.owner_id == unit.owner_id and target.health < target.max_health:
                 target.health = min(target.max_health, target.health + 1)
@@ -731,14 +819,18 @@ class AbilityManager:
     
     @staticmethod
     def _daniela_on_attack(unit, game_state):
-        target = game_state.board.get_unit_at(unit.target_x, unit.target_y)
-        if target and target.health > unit.health:
+        # Habilidad: Si el objetivo tiene más vida que ella, gana +2 de daño
+        # Como no tenemos el objetivo específico aquí, verificamos si hay enemigos más fuertes cerca
+        enemy_id = 1 - unit.owner_id
+        enemies = game_state.board.get_all_units(enemy_id)
+        stronger_enemies = [e for e in enemies if e.health > unit.health]
+        if stronger_enemies:
             unit.attack += 2
-            print(f">> [Habilidad Daniela]: {unit.name} ha ganado 3 de daño.") 
+            print(f">> [Habilidad Daniela]: {unit.name} ha ganado +2 de daño (objetivo más fuerte detectado).") 
 
     @staticmethod
     def _dante_economista_main_ability(unit, game_state):
-        game_state.get_player(unit.owner_id).cost_reduction_active = True
+        game_state.get_current_player().cost_reduction_active = True
     
     @staticmethod
     def _isidora_on_enter(unit, game_state):
@@ -763,11 +855,11 @@ class AbilityManager:
         if unit.has_moved:
             print(f">> [Habilidad Crisby Airsoft]: No se puede activar debido a que ya se ha movido esta unidad.")
             return
-        for nx, ny in game_state.board.get_neighbors(unit.x, unit.y):
+        for nx, ny in game_state.board.get_neighbors(unit.pos_x, unit.pos_y):
             target = game_state.board.get_unit_at(nx, ny)
             if target and target.owner_id != unit.owner_id:
                 target.immobile_turns = 1 
                 print(f">> [Habilidad Crisby Airsoft]: {target.name} no puede moverse por 1 turno.")
                 break
 
-    # Porfa decime si te dignas a darte cuenta que esto se modifico Git
+    # Porfa decime si te dignas a darte cuenta que esto se modifico Git1,Chino (Quemadas),unit,Exc

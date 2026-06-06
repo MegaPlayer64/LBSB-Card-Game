@@ -112,6 +112,10 @@ class AIController:
                             except Exception:
                                 pass
                 elif card_type in ('spell', 'trick'):
+                    # Saltar si este hechizo ya falló este turno
+                    if i in player.failed_spells_this_turn:
+                        continue
+                    
                     # Intentar objetivo global
                     try:
                         action = Action(ActionType.PLAY_SPELL, self.player_id, {'card_index': i, 'target': 'G'})

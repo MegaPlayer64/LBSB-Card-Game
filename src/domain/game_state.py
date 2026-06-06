@@ -308,8 +308,8 @@ class GameState:
                 print(">> [!] ¡Fuego amigo! No puedes atacar a tus aliados.")
                 return False
 
-            # 4. ¿Está en rango (Chebyshev - Maxima diferencia)?
-            dist = max(abs(fx - tx), abs(fy - ty))
+            # 4. ¿Está en rango (Manhattan)?
+            dist = abs(fx - tx) + abs(fy - ty)
             if dist > attacker.range_atk:
                 print(f">> [!] Objetivo fuera de rango. Distancia: {dist}, Rango: {attacker.range_atk}")
                 return False
@@ -481,9 +481,13 @@ class GameState:
         self.current_player_id = 1 - self.current_player_id
         if self.current_player_id == 0:
             self.turn_number += 1
+        
+        # Limpiar historial de hechizos fallidos del nuevo jugador al iniciar su turno
+        next_player = self.get_current_player()
+        next_player.failed_spells_this_turn.clear()
             
-        self.get_current_player().refresh_energy()
-        print(f"\n--- Turno finalizado. Ahora es el turno de {self.get_current_player().name} ---")
+        next_player.refresh_energy()
+        print(f"\n--- Turno finalizado. Ahora es el turno de {next_player.name} ---")
         self._start_turn()
 
 # Actualiza Git
