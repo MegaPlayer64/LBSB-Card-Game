@@ -14,3 +14,6 @@ class ActionType(Enum):
     ATTACK_BASE = auto()
 
     END_TURN = auto()
+
+    RESOLVE_ABILITY = auto()
+    CANCEL_ABILITY = auto()

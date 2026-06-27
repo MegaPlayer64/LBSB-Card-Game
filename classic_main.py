@@ -17,11 +17,6 @@ except ImportError as e:
     print(f"\n[ERROR CRITICO] Fallo de importación, posible dependencia circular: {e}\n")
     sys.exit(1)
 
-# pyrefly: ignore [missing-import]
-from kivy.app import App
-# pyrefly: ignore [missing-import]
-from kivy.uix.screenmanager import ScreenManager
-
 
 def start_integration_test():
     print("\n" + "="*40)
@@ -112,42 +107,25 @@ def start_integration_test():
     # Arrancamos el motor
     engine.run()
 
-class LBSBGameApp(App):
-    def build(self):
-        from src.interfaces.menu_screen import MenuPrincipal
-        from src.interfaces.game_screen import PantallaJuego
-
-        sm = ScreenManager()
-        
-        # Registrar pantallas vinculándolas por su identificador de texto
-        sm.add_widget(MenuPrincipal(name='menu_screen'))
-        
-        from src.interfaces.selection_screen import PantallaSeleccion
-        sm.add_widget(PantallaSeleccion(name='selection_screen'))
-        
-        sm.add_widget(PantallaJuego(name='game_screen'))
-        
-        from src.interfaces.result_screen import PantallaResultado
-        sm.add_widget(PantallaResultado(name='result_screen'))
-
-        from src.interfaces.inventory_screen import PantallaInventario
-        sm.add_widget(PantallaInventario(name='inventory_screen'))
-        
-        from src.interfaces.banner_screen import PantallaBanner
-        sm.add_widget(PantallaBanner(name='banner_screen'))
-        
-        # Guardar una referencia de la app en el manager para facilitar accesos directos
-        sm.app = self 
-        self.game_settings = None
-        return sm
 
 def main():
-    try:
-        print("Cargando Base de Datos de Cartas...")
-        CardLoader.load_units("src/data/cards.csv")
-        LBSBGameApp().run()
-    except Exception as e:
-        print(f"\n[!] Error Inesperado: {e}")
+    while True:
+        try:
+            start_integration_test()
+        except Exception as e:
+            print(f"\n[!] Error Inesperado durante la partida: {e}")
+            
+        print("\n" + "="*30)
+        print("   ¿TEST FINALIZADO?")
+        print("="*30)
+        opcion = input("Presiona 'r' para REINICIAR el Test o cualquier otra tecla para SALIR: ").lower()
+        
+        if opcion != 'r':
+            print("Cerrando el entorno de test... ¡Nos vemos!")
+            break 
+            
+        print("\nReiniciando sistema...\n")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

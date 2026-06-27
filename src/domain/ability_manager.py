@@ -63,6 +63,82 @@ class AbilityManager:
             AbilityManager._dante_economista_main_ability(unit, game_state)
 
     @staticmethod
+    def resolve_pending_ability(game_state, payload):
+        pending = game_state.pending_ability
+        if not pending: return False
+        
+        target = payload.get('target')
+        if not isinstance(target, tuple): return False
+        tx, ty = target
+        
+        if pending['ability'] == 'encore':
+            fx, fy = pending['unit_coords']
+            unit = game_state.board.get_unit_at(fx, fy)
+            if not unit: return False
+            
+            if game_state.board.is_within_bounds(tx, ty) and not game_state.board.is_occupied(tx, ty):
+                dist = abs(fx - tx) + abs(fy - ty)
+                if dist <= 1:
+                    game_state.board.move_unit(fx, fy, tx, ty)
+                    print(f">> {unit.name} se movió a ({tx}, {ty}).")
+                    return True
+                else:
+                    print(">> [!] Distancia mayor a 1 para Encore.")
+        elif pending['ability'] == 'daiaodama':
+            fx, fy = pending['source_coords']
+            unit = game_state.board.get_unit_at(fx, fy)
+            if not unit: return False
+            
+            enemy_unit = game_state.board.get_unit_at(tx, ty)
+            dist = max(abs(fx - tx), abs(fy - ty))
+            if enemy_unit and enemy_unit.owner_id != unit.owner_id and dist <= 3:
+                murio = enemy_unit.take_damage(7, game_state)
+                if murio:
+                    print(f">> ¡{enemy_unit.name} ha sido destruido por Daiaodama!")
+                    game_state.board.remove_unit(tx, ty)
+                return True
+            else:
+                print(">> [!] Objetivo inválido o fuera de rango (Máximo 3).")
+            return False
+            
+        elif pending['ability'] == 'josefa_a':
+            target_unit = game_state.board.get_unit_at(tx, ty)
+            if target_unit and target_unit.owner_id == pending['owner_id']:
+                target_unit.has_shield = True
+                print(f">> ¡{target_unit.name} recibió el Escudo de Josefa A!")
+                return True
+            else:
+                print(">> No se seleccionó un aliado válido. Toca un aliado.")
+            return False
+            
+        elif pending['ability'] == 'kapsi_retreat':
+            fx, fy = pending['unit_coords']
+            if game_state.board.is_within_bounds(tx, ty) and not game_state.board.is_occupied(tx, ty):
+                # Permite moverse a casillas adyacentes (rango 1 en x y y)
+                if abs(fx - tx) <= 1 and abs(fy - ty) <= 1:
+                    game_state.board.move_unit(fx, fy, tx, ty)
+                    print(f">> Kapsi se retiró a ({tx}, {ty})")
+                    return True
+            return False
+            
+        elif pending['ability'] == 'chino_quemadas':
+            fx, fy = pending['unit_coords']
+            effective_speed = pending['speed']
+            dist = abs(fx - tx) + abs(fy - ty)
+            
+            if game_state.board.is_within_bounds(tx, ty) and not game_state.board.is_occupied(tx, ty) and dist <= effective_speed:
+                game_state.board.move_unit(fx, fy, tx, ty)
+                print(f">> ¡ESQUIVA! Chino se movió a ({tx}, {ty}) y anuló el daño.")
+                return True
+            else:
+                print(">> [!] Casilla de escape inválida.")
+            return False
+        
+        return False
+        
+        return False
+
+    @staticmethod
     def execute_spell(card, target, game_state):
         print(f">> [Hechizo]: Ejecutando efecto de {card.name}")
         
@@ -245,28 +321,24 @@ class AbilityManager:
         tags = str(getattr(target_unit, 'groups', '')).lower()
         if 'danza' in tags or 'musica' in tags or 'música' in tags:
             fx, fy = target
-            tx, ty = None, None
             
             player = game_state.players[target_unit.owner_id]
             if getattr(player, 'is_ai', False):
                 dx = 1 if target_unit.owner_id == 0 else -1
                 if game_state.board.is_within_bounds(fx + dx, fy) and not game_state.board.is_occupied(fx + dx, fy):
                     tx, ty = fx + dx, fy
-            else:
-                print(f">> [Encore!] Mueve a {target_unit.name} 1 casilla extra.")
-                try:
-                    tx = int(input("Nueva posición X: "))
-                    ty = int(input("Nueva posición Y: "))
-                except ValueError: return False
-
-            if tx is not None and game_state.board.is_within_bounds(tx, ty) and not game_state.board.is_occupied(tx, ty):
-                dist = abs(fx - tx) + abs(fy - ty)
-                if dist <= 1:
                     game_state.board.move_unit(fx, fy, tx, ty)
                     print(f">> {target_unit.name} se movió a ({tx}, {ty}).")
                     return True
-                else:
-                    print(">> [!] Distancia mayor a 1.")
+                return False
+            else:
+                game_state.pending_ability = {
+                    'ability': 'encore',
+                    'unit_coords': (fx, fy),
+                    'unit_name': target_unit.name
+                }
+                print(f">> [Encore!] Selecciona la casilla a la que moverás a {target_unit.name} (Distancia máx 1).")
+                return True
         else:
             print(">> [!] La unidad seleccionada no es Danza ni Música.")
         return False
@@ -320,16 +392,9 @@ class AbilityManager:
             # AI logic: take the first valid one
             chosen = valid_indices[0]
         else:
-            try:
-                choice = input("Selecciona el índice de la unidad a robar (o presiona Enter para omitir): ")
-                if not choice.strip():
-                    return False # El jugador omitió el efecto
-                chosen = int(choice)
-                if chosen not in valid_indices:
-                    print(">> Selección inválida. Omite el robo.")
-                    return False # Selección inválida
-            except ValueError:
-                return False
+            print(">> [UI Móvil] TODO: Mostrar popup con estas opciones para que el jugador elija.")
+            print(">> [Auto-resolución por ahora] Seleccionando la primera opción automáticamente.")
+            chosen = valid_indices[0]
                 
         drawn_card = top_cards[chosen]
         player.deck.remove(drawn_card)
@@ -554,26 +619,23 @@ class AbilityManager:
                             ex, ey = nx, ny
                             break
                 if ex is not None: break
-        else:
-            try:
-                ex = int(input("Enemigo Objetivo X: "))
-                ey = int(input("Enemigo Objetivo Y: "))
-            except ValueError:
-                print(">> Coordenadas inválidas. Falla el hechizo.")
-                return False
                 
-        if ex is not None and game_state.board.is_within_bounds(ex, ey):
-            enemy_unit = game_state.board.get_unit_at(ex, ey)
-            dist = max(abs(fx - ex), abs(fy - ey))
-            if enemy_unit and enemy_unit.owner_id != target_unit.owner_id and dist <= 3:
-                murio = enemy_unit.take_damage(7, game_state)
-                if murio:
-                    print(f">> ¡{enemy_unit.name} ha sido destruido por Daiaodama!")
-                    game_state.board.remove_unit(ex, ey)
-                return True
-            else:
-                print(">> [!] Objetivo inválido o fuera de rango (Máximo 3).")
-        return False
+            if ex is not None and game_state.board.is_within_bounds(ex, ey):
+                enemy_unit = game_state.board.get_unit_at(ex, ey)
+                dist = max(abs(fx - ex), abs(fy - ey))
+                if enemy_unit and enemy_unit.owner_id != target_unit.owner_id and dist <= 3:
+                    murio = enemy_unit.take_damage(7, game_state)
+                    if murio:
+                        game_state.board.remove_unit(ex, ey)
+                    return True
+            return False
+        else:
+            game_state.pending_ability = {
+                'ability': 'daiaodama',
+                'source_coords': (fx, fy)
+            }
+            print(">> [Daiaodama] Selecciona una unidad enemiga a 3 casillas o menos.")
+            return True
 
     @staticmethod
     def _cristobal_on_enter(unit, game_state):
@@ -611,17 +673,12 @@ class AbilityManager:
                 enemy.deck.append(card_to_bottom)
                 print(f">> {card_to_bottom.name} enviada al fondo del mazo enemigo.")    
             else:
-                try:
-                    choice = int(input("Selecciona el índice de la carta a poner al fondo: "))
-                    if 0 <= choice < len(top_cards):
-                        card_to_bottom = top_cards.pop(choice)
-                        enemy.deck.remove(card_to_bottom)
-                        enemy.deck.append(card_to_bottom)
-                        print(f">> {card_to_bottom.name} enviada al fondo del mazo enemigo.")
-                    else:
-                        print(">> Selección inválida, se omite el efecto.")
-                except ValueError:
-                    print(">> Entrada inválida, se omite el efecto.")
+                print(">> [UI Móvil] TODO: Mostrar popup con las 3 cartas y elegir 1.")
+                print(">> [Auto-resolución por ahora] Eligiendo la primera carta automáticamente.")
+                card_to_bottom = top_cards.pop(0)
+                enemy.deck.remove(card_to_bottom)
+                enemy.deck.append(card_to_bottom)
+                print(f">> {card_to_bottom.name} enviada al fondo del mazo enemigo.")
         
     @staticmethod
     def _crisby_on_enter(unit, game_state):
@@ -642,18 +699,14 @@ class AbilityManager:
             aliados = [u for u in game_state.board.get_all_units() if u.owner_id == unit.owner_id and u != unit]
             if aliados:
                 target = max(aliados, key=lambda u: u.health)
+                target.has_shield = True
+                print(f">> ¡{target.name} recibió el Escudo de Josefa A!")
         else:
-            try:
-                tx = int(input("Aliado X: "))
-                ty = int(input("Aliado Y: "))
-                target = game_state.board.get_unit_at(tx, ty)
-            except ValueError: return
-
-        if target and target.owner_id == unit.owner_id:
-            target.has_shield = True
-            print(f">> ¡{target.name} recibió el Escudo de Josefa A!")
-        else:
-            print(">> No se encontró un aliado válido. El escudo se desperdició.")
+            game_state.pending_ability = {
+                'ability': 'josefa_a',
+                'owner_id': unit.owner_id
+            }
+            print(">> [Josefa A] Selecciona un aliado para darle Escudo.")
 
     @staticmethod
     def _richi_on_enter(unit, game_state):
@@ -684,15 +737,15 @@ class AbilityManager:
                     if game_state.board.is_within_bounds(nx, ny) and not game_state.board.is_occupied(nx, ny):
                         tx, ty = nx, ny
                         break
+            if tx is not None and game_state.board.is_within_bounds(tx, ty) and not game_state.board.is_occupied(tx, ty):
+                game_state.board.move_unit(fx, fy, tx, ty)
+                print(f">> Kapsi se retiró a ({tx}, {ty})")
         else:
-            try:
-                tx = int(input("Nueva posición X: "))
-                ty = int(input("Nueva posición Y: "))
-            except ValueError: return
-
-        if tx is not None and game_state.board.is_within_bounds(tx, ty) and not game_state.board.is_occupied(tx, ty):
-            game_state.board.move_unit(fx, fy, tx, ty)
-            print(f">> Kapsi se retiró a ({tx}, {ty})")
+            game_state.pending_ability = {
+                'ability': 'kapsi_retreat',
+                'unit_coords': (fx, fy)
+            }
+            print(">> [Kapsi] Selecciona una casilla adyacente para retirarte.")
 
     @staticmethod
     def _amira_presidenta_on_attack(unit, game_state):
@@ -755,36 +808,27 @@ class AbilityManager:
                     temp_tx, temp_ty = fx + dx, fy + dy
                     dist = abs(fx - temp_tx) + abs(fy - temp_ty)
                     
-                    # Usamos tus validaciones del board
                     if dist <= effective_speed and dist > 0:
                         if game_state.board.is_within_bounds(temp_tx, temp_ty) and not game_state.board.is_occupied(temp_tx, temp_ty):
                             tx, ty = temp_tx, temp_ty
                             break # Encontró un lugar y se escapa
                 if tx is not None: break
-        else:
-            # JUGADOR HUMANO
-            print(f">> [Habilidad Chino Quemadas]: ¡Recibiste daño! ¿Quieres moverte para anularlo?")
-            try:
-                if input("¿Moverse? (y/n): ").lower() == 'y':
-                    tx = int(input("Nueva posición X: "))
-                    ty = int(input("Nueva posición Y: "))
-                else:
-                    return damage
-            except ValueError:
-                return damage
-
-        # --- Validación Final y Ejecución ---
-        if tx is not None and ty is not None:
-            dist = abs(fx - tx) + abs(fy - ty)
-            
-            # Aquí es donde usas la lógica que ya tienes en validate_action (pero manual)
-            if game_state.board.is_within_bounds(tx, ty) and not game_state.board.is_occupied(tx, ty) and dist <= effective_speed:
+                
+            if tx is not None and ty is not None:
                 game_state.board.move_unit(fx, fy, tx, ty)
                 print(f">> ¡ESQUIVA! Chino se movió a ({tx}, {ty}) y anuló los {damage} de daño.")
                 unit.ability_used_this_turn = True
                 return 0
-            else:
-                print(">> [!] Movimiento de evasión inválido. Chino recibió el impacto.")
+        else:
+            # JUGADOR HUMANO
+            game_state.pending_ability = {
+                'ability': 'chino_quemadas',
+                'unit_coords': (fx, fy),
+                'speed': effective_speed
+            }
+            print(f">> [Habilidad Chino Quemadas]: ¡Recibiste daño! Selecciona una casilla para esquivar (anula daño).")
+            unit.ability_used_this_turn = True
+            return 0
         
         return damage
     @staticmethod
@@ -852,10 +896,22 @@ class AbilityManager:
     
     @staticmethod
     def _crisby_airsoft_on_activate(unit, game_state):
-        if unit.has_moved:
+        if getattr(unit, 'has_moved', False):
             print(f">> [Habilidad Crisby Airsoft]: No se puede activar debido a que ya se ha movido esta unidad.")
             return
-        for nx, ny in game_state.board.get_neighbors(unit.pos_x, unit.pos_y):
+            
+        pos = None
+        for y in range(game_state.board.height):
+            for x in range(game_state.board.width):
+                if game_state.board.get_unit_at(x, y) == unit:
+                    pos = (x, y)
+                    break
+            if pos: break
+            
+        if not pos: return
+        fx, fy = pos
+        
+        for nx, ny in game_state.board.get_neighbors(fx, fy):
             target = game_state.board.get_unit_at(nx, ny)
             if target and target.owner_id != unit.owner_id:
                 target.immobile_turns = 1 

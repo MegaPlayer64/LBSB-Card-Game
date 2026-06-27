@@ -15,11 +15,14 @@ class GameState:
         self.turn_number = 1
         self.game_over = False
         self.active_environment = None
+        self.pending_ability = None
 
         # --- Inicialización de la Partida ---
         for p in self.players:
             # Verificar vida inicial en 80 HP
             p.health = 80
+            p.max_energy = getattr(p, 'max_energy', 1)
+            p.current_energy = getattr(p, 'current_energy', 1)
             
             # Cargar mazos
             if p == self.players[0]:
@@ -128,7 +131,12 @@ class GameState:
         if self.game_over: return False
         if int(action.player_id) != int(self.current_player_id): return False
 
-        if action.type.name == "END_TURN":
+        if getattr(self, 'pending_ability', None):
+            if action.type.name not in ("RESOLVE_ABILITY", "CANCEL_ABILITY"):
+                print(">> [!] Tienes una habilidad pendiente. Selecciona el objetivo o cancela.")
+                return False
+
+        if action.type.name in ("END_TURN", "CANCEL_ABILITY", "RESOLVE_ABILITY"):
             return True
 
         if action.type.name == "PLAY_CARD":
@@ -316,12 +324,12 @@ class GameState:
 
             # ID 32: Isidora (Inmune si tiene aliados adyacentes)
             if target.id == 59:
-                if any(self.board.get_unit_at(nx, ny) for nx, ny in self.board.get_neighbors(target.x, target.y)):
+                if any(self.board.get_unit_at(nx, ny) for nx, ny in self.board.get_neighbors(tx, ty)):
                     return False 
 
             if dist > 1 and "Danza" in target.groups:
                 # Buscar si Ale está adyacente al defensor
-                for nx, ny in self.board.get_neighbors(target.x, target.y):
+                for nx, ny in self.board.get_neighbors(tx, ty):
                     vecino = self.board.get_unit_at(nx, ny)
                     if vecino and vecino.id == 11:
                         return False 
@@ -332,6 +340,18 @@ class GameState:
     def apply_action(self, action: Action) -> bool:
         if not self.validate_action(action):
             return False
+
+        if action.type.name == "CANCEL_ABILITY":
+            self.pending_ability = None
+            print(">> [!] Habilidad cancelada.")
+            return True
+            
+        if action.type.name == "RESOLVE_ABILITY":
+            from src.domain.ability_manager import AbilityManager
+            result = AbilityManager.resolve_pending_ability(self, action.payload)
+            if result:
+                self.pending_ability = None
+            return result
 
         if action.type.name == "PLAY_CARD":
             card_index = action.payload['card_index']
@@ -440,10 +460,21 @@ class GameState:
         return True
     
     def _start_turn(self):
+        current_player = self.get_current_player()
+        
+        # Robar carta al inicio del turno
+        if current_player.deck and len(current_player.hand) < 10:
+            drawn_card = current_player.deck.pop(0)
+            current_player.hand.append(drawn_card)
+            print(f">> {current_player.name} ha robado: {drawn_card.name}")
+            
         # Llamar trigger_on_turn_start de AbilityManager
-        from domain.ability_manager import AbilityManager
-        for unit in self.board.get_all_units(self.current_player_id):
-            AbilityManager.trigger_on_turn_start(unit, self)
+        try:
+            from src.domain.ability_manager import AbilityManager
+            for unit in self.board.get_all_units(self.current_player_id):
+                AbilityManager.trigger_on_turn_start(unit, self)
+        except ImportError:
+            pass
         
     def _end_turn(self):
         # 1. Resetear el estado de todas las unidades antes de cambiar de jugador

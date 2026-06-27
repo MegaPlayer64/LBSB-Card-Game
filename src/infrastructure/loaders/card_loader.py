@@ -77,3 +77,12 @@ class CardLoader:
         except Exception as e:
             print(f"Error al cargar el mazo {deck_recipe_path}: {e}")
             return []
+    
+    @staticmethod
+    def get_card_stats_by_id(card_id, csv_path="src/data/cards.csv"):
+        """Busca una carta específica por su ID en el CSV y devuelve su objeto listo."""
+        all_cards = CardLoader.load_units(csv_path)
+        for card in all_cards:
+            if card.id == card_id:
+                return card
+        return None
