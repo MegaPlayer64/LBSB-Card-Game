@@ -107,6 +107,7 @@ class PantallaJuego(Screen):
             
             if origen == (x, y):
                 accion = Action(player_id=jugador.id, type=ActionType.ACTIVATE_ABILITY, payload={'from': origen})
+                print("Intento de activar habilidad propia lol")
             elif unidad_en_celda and unidad_en_celda.owner_id != jugador.id:
                 accion = Action(player_id=jugador.id, type=ActionType.ATTACK, payload={'from': origen, 'target': (x, y)})
             else:
@@ -199,7 +200,7 @@ class PantallaJuego(Screen):
         # Redibujar Tropas
         for (cx, cy), unit in self.game_state.board.grid.items():
             boton = self.celdas_graficas[(cx, cy)]
-            boton.text = f"{unit.name}\n{unit.attack} ⚔️ | {unit.health} ❤️"
+            boton.text = f"{unit.name}\n[b]{unit.attack} Dmg[/b] | {unit.health} Hp \n {unit.speed} Vel | {unit.range_atk} Rng"
             boton.background_color = (0.2, 0.5, 0.8, 1) if unit.owner_id == 0 else (0.8, 0.3, 0.3, 1)
 
         # Redibujar Mano

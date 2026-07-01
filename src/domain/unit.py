@@ -27,7 +27,8 @@ class Unit(Card):
         elif str(self.id) == "59" or self.name == 'Melsizis (DT)':
             self.static_abilities.append({"type": "buff_tag_attack", "tag": "fuerzas especiales valenzuela", "amount": 1})
             self.static_abilities.append({"type": "buff_tag_speed_if_tag_present", "target_tag": "fuerzas especiales valenzuela", "condition_tag": "cabezal de tren", "amount": 1})
-        
+        self.immobile_turns = 0
+        self.has_activated_this_turn = False
         # Buffs temporales (Hechizos y estados por turnos)
         self.temporary_buffs = []
         
@@ -44,6 +45,9 @@ class Unit(Card):
             self.health -= damage_taken
             print(f">> {self.name} recibió {amount} de daño, pero su escudo lo redujo a {damage_taken}! (Vida restante: {self.health})")
             self.has_shield = False
+        elif self.id == 61 and self.has_activated_this_turn == False:
+            print(f">> {self.name} recibió {amount} de daño, pero su inmunidad lo protegió! (Vida restante: {self.health})")
+            self.has_activated_this_turn = True
         else:
             self.health -= amount
             print(f">> {self.name} recibió {amount} de daño! (Vida restante: {self.health})")

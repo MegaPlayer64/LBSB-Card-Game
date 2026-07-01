@@ -61,11 +61,11 @@ class PantallaResultado(Screen):
         premios = RewardsSystem.otorgar_recompensa(victoria=self.victoria_local, dificultad_rival=tipo_rival)
             
         if premios:
-                # CORRECCIÓN: Usamos lbl_detalle que es el que definiste en __init__
-                self.lbl_detalle.text += (
-                    f"\n\n[color=00ff88][b]¡BOTÍN DE GUERRA![/b][/color]\n"
-                    f"+{premios['monedas']} 🪙 Monedas  |  +{premios['esencia']} ✨ Esencia"
-                )
+            # CORRECCIÓN: Usamos lbl_detalle que es el que definiste en __init__
+            self.lbl_detalle.text += (
+                f"\n\n[color=00ff88][b]¡BOTÍN DE GUERRA![/b][/color]\n"
+                f"+{premios['monedas']} 🪙 Monedas  |  +{premios['esencia']} ✨ Esencia"
+            )
             
     def configurar(self, ganador_nombre: str, perdedor_nombre: str, jugador_local_id: int, ganador_id: int):
         """Llamar antes de hacer la transición para personalizar el texto."""

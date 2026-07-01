@@ -244,8 +244,10 @@ class GameState:
             if dist > effective_speed:
                 print(f">> [!] {unit.name} no llega. Distancia: {dist}, Velocidad: {effective_speed}")
                 return False
-
-            if unit.id == 25 and getattr(unit, 'immobile_turns', 0) > 0:
+            
+            # 6. ¿No tiene paralisis de algun tipo?
+            if getattr(unit, 'immobile_turns', 0) > 0:
+                print(f">> [!] {unit.name} no se puede mover. Turnos de inmovilidad: {getattr(unit, 'immobile_turns', 0)}")
                 return False 
 
             return True
@@ -323,8 +325,9 @@ class GameState:
                 return False
 
             # ID 32: Isidora (Inmune si tiene aliados adyacentes)
-            if target.id == 59:
+            if target.id == 31:
                 if any(self.board.get_unit_at(nx, ny) for nx, ny in self.board.get_neighbors(tx, ty)):
+                    print(">> [!] Isidora no puede ser objetivo de ataques.")
                     return False 
 
             if dist > 1 and "Danza" in target.groups:
@@ -334,7 +337,28 @@ class GameState:
                     if vecino and vecino.id == 11:
                         return False 
             return True
-        
+        # --- VALIDACIÓN PARA ACTIVAR HABILIDADES MANUALES ---
+        if action.type.name == "ACTIVATE_ABILITY":
+            fx, fy = action.payload['from']
+            unit = self.board.get_unit_at(fx, fy)
+            
+            # 1. ¿Existe la unidad en esa casilla?
+            if not unit:
+                print(f">> [!] No hay ninguna unidad en ({fx}, {fy}) para activar una habilidad.")
+                return False
+                
+            # 2. ¿La unidad es del jugador que intenta activarla?
+            if int(unit.owner_id) != int(action.player_id):
+                print(f">> [!] No puedes activar la habilidad de una unidad enemiga.")
+                return False
+                
+            # 3. ¿Ya se usó la habilidad de esta unidad en este turno? (Opcional, por si quieres limitar)
+            if getattr(unit, 'has_activated_this_turn', False):
+                print(f">> [!] {unit.name} ya usó su habilidad activa en este turno.")
+                return False
+                
+            return True
+            
         return False
     
     def apply_action(self, action: Action) -> bool:
@@ -365,6 +389,10 @@ class GameState:
                 card.owner_id = int(player.id)
                 self.board.set_unit_at(tx, ty, card)
                 print(f">> ¡{player.name} invocó a {card.name} en ({tx}, {ty})!")
+                
+                # CORRECCIÓN: Integrar la gestión de habilidades directamente aquí
+                from src.domain.ability_manager import AbilityManager
+                AbilityManager.trigger_on_enter(card, self)
                 
                 # Efecto pasivo 52 (Zona de Juegos)
                 if getattr(self, 'active_environment', None) and int(self.active_environment.card.id) == 52:
@@ -460,7 +488,22 @@ class GameState:
         elif action.type.name == "ACTIVATE_ABILITY":
             fx, fy = action.payload['from']
             unit = self.board.get_unit_at(fx, fy)
-            unit.on_activate(self)
+
+            if unit:
+                print(f">> [DEBUG] Intentando activar habilidad manual de {unit.name} (ID: {unit.id})")
+                
+                # =========================================================
+                # 🔌 CABLE 2: ¡PUENTE DE ACTIVACIONES MANUALES!
+                # =========================================================
+                from src.domain.ability_manager import AbilityManager
+                AbilityManager.trigger_on_activate(unit, self)
+                # =========================================================
+                
+                # Mantener por si acaso alguna unidad usa la lógica antigua directa
+                if hasattr(unit, 'on_activate'):
+                    unit.on_activate(self)
+            else:
+                print(f">> [!] No hay unidad en ({fx}, {fy}) para activar habilidad.")
 
         elif action.type.name == "END_TURN":
             self._end_turn()
@@ -517,15 +560,14 @@ class GameState:
                                 if buff['duration'] > 0:
                                     buffs_to_keep.append(buff)
                         unit.temporary_buffs = buffs_to_keep
+                        
+                    if hasattr(unit, 'immobile_turns') and unit.immobile_turns > 0:
+                        unit.immobile_turns -= 1
 
         # Decrementar penalización de curación
         current_p = self.get_current_player()
         if hasattr(current_p, 'cant_heal_turns') and current_p.cant_heal_turns > 0:
-            current_p.cant_heal_turns -= 1
-
-        for unit in self.board.get_all_units(current_p.id):
-            if hasattr(unit, 'immobile_turns') and unit.immobile_turns > 0:
-                unit.immobile_turns -= 1
+            current_p.cant_heal_turns -= 1         
         
         current_p.crisby_cost_reduction_active = False
         current_p.d_economia_cost_reduction_active = False

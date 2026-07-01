@@ -464,6 +464,7 @@ class AbilityManager:
     def _spell_44_effect(card, target, game_state):
         # Roba 2 cartas. Si tienes 7 o más en mano, roba 1.
         player = game_state.get_current_player()
+        print(f">> DIAGNÓSTICO: Cartas en mazo={len(player.deck)}, Cartas en mano={len(player.hand)}") # <-- AGREGA ESTO
         
         cards_to_draw = 1 if len(player.hand) >= 7 else 2
         drawn_count = 0
@@ -479,6 +480,7 @@ class AbilityManager:
             print(">> No pudiste robar cartas (mazo vacío o mano llena).")
             
         return True
+
 
     @staticmethod
     def _spell_45_effect(card, target, game_state):
@@ -682,10 +684,9 @@ class AbilityManager:
         
     @staticmethod
     def _crisby_on_enter(unit, game_state):
-        # Próxima carta coste 4 o menos cuesta 1 menos este turno
+        # Crisby enciende la bandera de descuento para su jugador
         player = game_state.players[unit.owner_id]
-        # Dejamos la variable lista para ser leída por el sistema de maná
-        player.cost_reduction_active = True 
+        player.crisby_cost_reduction_active = True 
         print(f">> [Habilidad Crisby]: Tu próxima carta de coste 4 o menos costará 1 menos este turno.")
 
     @staticmethod
@@ -874,7 +875,8 @@ class AbilityManager:
 
     @staticmethod
     def _dante_economista_main_ability(unit, game_state):
-        game_state.get_current_player().cost_reduction_active = True
+        player = game_state.get_current_player()
+        player.d_economia_cost_reduction_active = True
     
     @staticmethod
     def _isidora_on_enter(unit, game_state):
