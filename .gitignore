@@ -1,0 +1,4 @@
+.venv/
+.continue/
+node_modules/
+package.json

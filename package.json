@@ -1,21 +1,21 @@
 {
-  "name": "lbsb-engine-v2",
+  "name": "chacalitostcg",
   "version": "1.0.0",
-  "description": "Yeah this is good",
-  "main": "index.js",
+  "description": "Motor de juego de cartas coleccionables",
+  "main": "main.py",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MegaPlayer64/LBSB-Card-Game.git"
+    "url": "git+https://github.com/MegaPlayer64/ChacalitosTCG.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/MegaPlayer64/LBSB-Card-Game/issues"
+    "url": "https://github.com/MegaPlayer64/ChacalitosTCG/issues"
   },
-  "homepage": "https://github.com/MegaPlayer64/LBSB-Card-Game#readme"
+  "homepage": "https://github.com/MegaPlayer64/ChacalitosTCG#readme"
 }
