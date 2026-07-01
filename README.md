@@ -40,10 +40,10 @@ Asegúrate de tener instalado Python 3 y el framework Kivy en tu entorno.
 
 ```bash
 # 1. Clonar el repositorio
-git clone [https://github.com/MegaPlayer64/LBSB-Card-Game.git](https://github.com/MegaPlayer64/LBSB-Card-Game.git)
+git clone [https://github.com/MegaPlayer64/ChacalitosTCG.git](https://github.com/MegaPlayer64/ChacalitosTCG.git)
 
 # 2. Acceder al directorio del proyecto
-cd LBSB-Card-Game
+cd ChacalitosTCG
 
 # 3. Instalar las dependencias necesarias
 pip install kivy
